@@ -6,6 +6,13 @@
  *
  * Skeleton for 15-441 Project 2 command line parsing.
  *
+ *
+ * Modified by: Ke Wu <kewu@andrew.cmu.edu>
+ *  
+ * Date: 10/23/2015
+ *
+ * Description: add two functions to read get_chunk_file and has_chunk_file
+ *
  */
 
 #include <assert.h>
@@ -182,6 +189,7 @@ void read_has_chunk_file(bt_config_t *config){
     char hash[BT_FILENAME_LEN];
     int count;
 
+    /* first go through file to count how many lines (records) */
     f = fopen(config->has_chunk_file, "r");
     assert(f != NULL);
     count = 0;
@@ -190,10 +198,12 @@ void read_has_chunk_file(bt_config_t *config){
     }
     fclose(f);
 
+    /* allocate resources */   
     config->has_chunks.size = count;
     config->has_chunks.chunks = (struct single_chunk*) 
                                 malloc(sizeof(struct single_chunk) * count);
-
+  
+    /* read file */                       
     f = fopen(config->has_chunk_file, "r");
     assert(f != NULL);
     count = 0;
@@ -227,6 +237,7 @@ void read_get_chunk_file(bt_config_t *config, char* get_chunk_file){
     char hash[BT_FILENAME_LEN];
     int count;
 
+    /* first go through file to count how many lines (records) */
     f = fopen(get_chunk_file, "r");
     assert(f != NULL);
     count = 0;
@@ -235,10 +246,12 @@ void read_get_chunk_file(bt_config_t *config, char* get_chunk_file){
     }
     fclose(f);
 
+    /* allocate resources */
     config->get_chunks.size = count;
     config->get_chunks.chunks = (struct single_chunk*) 
                                 malloc(sizeof(struct single_chunk) * count);
 
+    /* read file */
     f = fopen(get_chunk_file, "r");
     assert(f != NULL);
     count = 0;
