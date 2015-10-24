@@ -31,6 +31,7 @@
 #include "bt_parse.h"
 #include "input_buffer.h"
 #include "whohas_ihave.h"
+#include "pkt_helper.h"
 
 void peer_run(bt_config_t *config);
 
@@ -68,7 +69,7 @@ int main(int argc, char **argv) {
 
 
 void process_inbound_udp(int sock, bt_config_t *config) {
-  #define BUFLEN MAX_PACKET_LEN
+  #define BUFLEN MAX_PKT_LEN
   struct sockaddr_in from;
   socklen_t fromlen;
   char buf[BUFLEN];
@@ -113,7 +114,7 @@ void process_get(bt_config_t* config) {
         memcpy(hashs[i], config->get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
     }
 
-    /* TODO: generate WHOHAS packet */
+    /* generate WHOHAS packet */
     int max_packet_len, last_packet_len, packets_size;
     char** whohas_packet = generate_whohas(config->get_chunks.size,
                                             hashs, CHUNK_HASH_SIZE,
@@ -123,7 +124,7 @@ void process_get(bt_config_t* config) {
         free(hashs[i]);
     free(hashs);
 
-    max_packet_len = MAX_PACKET_LEN;
+    max_packet_len = MAX_PKT_LEN;
 
     bt_peer_t *peer = config->peers;
     while (peer) {

@@ -1,10 +1,10 @@
 /**
- * pkt_generator.c
+ * pkt_helper.c
  *
  *
  */
 
-#include "pkt_generator.h"
+#include "pkt_helper.h"
 
 char ** generate_whohas(int size, char ** hash, int h_len, int * packets_size, int * last_p_len) {
     // size --> hash array size, i.e. number of chunk hashes

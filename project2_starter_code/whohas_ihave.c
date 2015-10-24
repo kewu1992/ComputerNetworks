@@ -4,6 +4,7 @@
 #include "spiffy.h"
 #include "whohas_ihave.h"
 #include "helper.h"
+#include "pkt_helper.h"
 
 void process_whohas_packet(int len, char* packet, bt_config_t* config,
                             struct sockaddr_in* from){
@@ -23,8 +24,7 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
 
     /* if I don't have any of the pack, then just return */
     if (count == 0)
-        continue;
-
+        return;
 
     /* get the hash value of the chunks that I have */
     hash = (char**) malloc(sizeof(char*) * count);

@@ -202,7 +202,7 @@ void read_has_chunk_file(bt_config_t *config){
         assert(sscanf(line, "%d %s", &(temp->id), hash) != 0);
         /* convert 0x to char */
         int i = 0;
-        while (hash[i] != '\n') {
+        while (i>>1 < CHUNK_HASH_SIZE) {
             int b;
             sscanf(&hash[i], "%2x", &b);
             temp->hash[i/2] = b;
@@ -216,6 +216,7 @@ void read_has_chunk_file(bt_config_t *config){
         for (int j = 0; j < CHUNK_HASH_SIZE; j++)
             DPRINTF(DEBUG_INIT, " %x", config->has_chunks.chunks[i].hash[j]);
     }
+    DPRINTF(DEBUG_INIT, "\n");
 
     fclose(f);
 }
@@ -246,7 +247,7 @@ void read_get_chunk_file(bt_config_t *config, char* get_chunk_file){
         assert(sscanf(line, "%d %s", &(temp->id), hash) != 0);
         /* convert 0x to char */
         int i = 0;
-        while (hash[i] != '\n') {
+        while (i>>1 < CHUNK_HASH_SIZE) {
             int b;
             sscanf(&hash[i], "%2x", &b);
             temp->hash[i/2] = b;
@@ -260,6 +261,7 @@ void read_get_chunk_file(bt_config_t *config, char* get_chunk_file){
         for (int j = 0; j < CHUNK_HASH_SIZE; j++)
             DPRINTF(DEBUG_INIT, " %x", config->get_chunks.chunks[i].hash[j]);
     }
+    DPRINTF(DEBUG_INIT, "\n");
 
     fclose(f);
 }
