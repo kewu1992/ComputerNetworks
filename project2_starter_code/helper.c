@@ -1,5 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "helper.h"
 
 int find_chunk(struct many_chunks *chunks, char* hash){
@@ -9,7 +12,7 @@ int find_chunk(struct many_chunks *chunks, char* hash){
 	return -1;
 }
 
-bt_peer_t* find_peer(bt_peer_t *peers, sockaddr_in* addr) {
+bt_peer_t* find_peer(bt_peer_t *peers, struct sockaddr_in* addr) {
 	char buf[255];
 
 	bt_peer_t* peer = peers;

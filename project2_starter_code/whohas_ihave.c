@@ -1,4 +1,7 @@
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include "spiffy.h"
 #include "whohas_ihave.h"
 #include "helper.h"
 
@@ -22,11 +25,11 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
     hash = (char**) malloc(sizeof(char*) * count);
     for (int i = 0; i < count; i++){
         hash[i] = (char*) malloc(CHUNK_HASH_SIZE);
-        memcpy(hash[i], config->has_chunks.chunks[had_chunk_index[i]].hash);
+        memcpy(hash[i], config->has_chunks.chunks[had_chunk_index[i]].hash, 
+                CHUNK_HASH_SIZE);
     }
 
     /* generate IHAVE packce */
-    int len;
     char* Ihave_packet = generate_Ihave(count, hash, CHUNK_HASH_SIZE, &len);
 
     /* free memory of malloc */
@@ -58,7 +61,7 @@ void process_Ihave_packet(int len, char* packet, bt_config_t* config,
     bt_peer_t* peer = find_peer(config->peers, from);
 
     peer->has_chunks.size = size;
-    peer->has_chunks.chunks = (single_chunk*) 
+    peer->has_chunks.chunks = (struct single_chunk*) 
                                 malloc(sizeof(struct single_chunk) * size);
     for (int i  = 0; i < size; i++){
         memcpy(peer->has_chunks.chunks[i].hash, hash[i], CHUNK_HASH_SIZE);

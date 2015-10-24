@@ -30,6 +30,7 @@
 #include "spiffy.h"
 #include "bt_parse.h"
 #include "input_buffer.h"
+#include "whohas_ihave.h"
 
 void peer_run(bt_config_t *config);
 
@@ -66,7 +67,7 @@ int main(int argc, char **argv) {
 }
 
 
-void process_inbound_udp(int sock) {
+void process_inbound_udp(int sock, bt_config_t *config) {
   #define BUFLEN MAX_PACKET_LEN
   struct sockaddr_in from;
   socklen_t fromlen;
@@ -106,11 +107,22 @@ void process_inbound_udp(int sock) {
 /* the function will flood the network with a WHOHAS packet */
 void process_get(bt_config_t* config) {
 
+    char** hashs = (char**) malloc(sizeof(char*) * config->get_chunks.size);
+    for (int i = 0; i < config->get_chunks.size; i++){
+        hashs[i] = (char*) malloc(CHUNK_HASH_SIZE);
+        memcpy(hashs[i], config->get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
+    }
+
     /* TODO: generate WHOHAS packet */
     int max_packet_len, last_packet_len, packets_size;
-    char** whohas_packet = generate_whohas(config->get_chunks->size,
-                            config->get_chunks->hash, CHUNK_HASH_SIZE,
-                            &packets_size, &last_packet_len);
+    char** whohas_packet = generate_whohas(config->get_chunks.size,
+                                            hashs, CHUNK_HASH_SIZE,
+                                            &packets_size, &last_packet_len);
+    /* free memory of malloc */
+    for (int i = 0; i < config->get_chunks.size; i++)
+        free(hashs[i]);
+    free(hashs);
+
     max_packet_len = MAX_PACKET_LEN;
 
     bt_peer_t *peer = config->peers;
@@ -132,6 +144,11 @@ void process_get(bt_config_t* config) {
         }
         peer = peer->next;
     }
+
+    /* free memory that is allocted from generate_whohas() */
+    for (int i = 0; i < packets_size; i++)
+        free(whohas_packet[i]);
+    free(whohas_packet);
 }
 
 void handle_user_input(char *line, void *cbdata) {
@@ -190,7 +207,7 @@ void peer_run(bt_config_t *config) {
     
     if (nfds > 0) {
         if (FD_ISSET(sock, &readfds)) {
-            process_inbound_udp(sock);
+            process_inbound_udp(sock, config);
         }
     
         /* remember to free config->get_chunks->chunks when finish downloading */
