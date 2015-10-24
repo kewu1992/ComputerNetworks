@@ -73,8 +73,8 @@ void process_inbound_udp(int sock) {
   char buf[BUFLEN];
 
   fromlen = sizeof(from);
-  int ret = spiffy_recvfrom(sock, buf, BUFLEN, 0, (struct sockaddr *) &from, &fromlen);
-
+  int ret = spiffy_recvfrom(sock, buf, BUFLEN, 0, 
+                            (struct sockaddr *) &from, &fromlen);
   
   DPRINTF(DEBUG_SOCKETS, "Incoming message from %s:%d\n%s\n\n", 
      inet_ntoa(from.sin_addr),
@@ -103,9 +103,8 @@ void process_inbound_udp(int sock) {
 
 }
 
-void process_get(char *chunkfile, char *outputfile, bt_config_t* config) {
-    read_get_chunk_file(config, chunkfile);
-    strcpy(config->output_file, outputfile);
+/* the function will flood the network with a WHOHAS packet */
+void process_get(bt_config_t* config) {
 
     /* TODO: generate WHOHAS packet */
     int max_packet_len, last_packet_len, packets_size;
@@ -118,11 +117,12 @@ void process_get(char *chunkfile, char *outputfile, bt_config_t* config) {
     while (peer) {
         for (int i = 0; i < packets_size; i++){
             int has_send = 0, ret;
-            int packet_len = (i == packets_size-1) ? last_packet_len : max_packet_len;
+            int packet_len = 
+                    (i == packets_size-1) ? last_packet_len : max_packet_len;
             while (has_send < packet_len){
                 ret = spiffy_sendto(config->sock, whohas_packet[i] + has_send, 
-                                packet_len - has_send, 0, 
-                                (struct sockaddr *)&peer->addr, sizeof(peer->addr));
+                            packet_len - has_send, 0, 
+                            (struct sockaddr *)&peer->addr, sizeof(peer->addr));
                 if (ret < 0) {
                     perror("send packet error");
                     exit(-1);
@@ -143,7 +143,9 @@ void handle_user_input(char *line, void *cbdata) {
 
   if (sscanf(line, "GET %120s %120s", chunkf, outf)) {
     if (strlen(outf) > 0) {
-      process_get(chunkf, outf, config);
+        read_get_chunk_file(config, chunkf);
+        strcpy(config->output_file, outf);
+        process_get(config);
     }
   }
 }
