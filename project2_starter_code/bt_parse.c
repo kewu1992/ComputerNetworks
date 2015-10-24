@@ -151,6 +151,10 @@ void bt_parse_peer_list(bt_config_t *config) {
     node->addr.sin_family = AF_INET;
     node->addr.sin_port = htons(port);
 
+    /* at first, don't know what packets that other peers own */
+    node->has_chunks.size = -1;
+    node->has_chunks.chunks = NULL;    
+
     node->next = config->peers;
     config->peers = node;
   }
@@ -170,4 +174,90 @@ void bt_dump_config(bt_config_t *config) {
   
   for (p = config->peers; p; p = p->next) 
     printf("  peer %d: %s:%d\n", p->id, inet_ntoa(p->addr.sin_addr), ntohs(p->addr.sin_port));
+}
+
+void read_has_chunk_file(bt_config_t *config){
+    FILE *f;
+    char line[BT_FILENAME_LEN];
+    char hash[BT_FILENAME_LEN];
+    int count;
+
+    f = fopen(config->has_chunk_file, "r");
+    assert(f != NULL);
+    count = 0;
+    while (fgets(line, BT_FILENAME_LEN, f) != NULL) {
+        count++;
+    }
+    fclose(f);
+
+    config->has_chunks.size = count;
+    config->has_chunks->chunks = (single_chunk*) malloc(sizeof(struct single_chunk) * count);
+
+    f = fopen(config->has_chunk_file, "r");
+    assert(f != NULL);
+    count = 0;
+     while (fgets(line, BT_FILENAME_LEN, f) != NULL) {
+        single_chunk* temp = &(config->has_chunks->chunks[count++]);
+        assert(sscanf(line, "%d %s", &(temp->id), &hash != 0);
+        /* convert 0x to char */
+        int i = 0;
+        while (hash[i] != '\n') {
+            int b;
+            sscanf(&hash[i], "%2x", &b);
+            temp->hash[i/2] = b;
+            i += 2;
+        }    
+    }
+
+    DPRINTF(DEBUG_INIT, "Read has chunk file: %d lines\n", count);
+    for (int i = 0; i < count; i++){
+        DPRINTF(DEBUG_INIT, "%d", config->has_chunks->chunks[i].id);
+        for (int j = 0; j < CHUNK_HASH_SIZE; j++)
+            DPRINTF(DEBUG_INIT, " %x", config->has_chunks->chunks[i].hash[j]);
+    }
+
+    fclose(f);
+}
+
+void read_get_chunk_file(bt_config_t *config, char* get_chunk_file){
+    FILE *f;
+    char line[BT_FILENAME_LEN];
+    char hash[BT_FILENAME_LEN];
+    int count;
+
+    f = fopen(get_chunk_file, "r");
+    assert(f != NULL);
+    count = 0;
+    while (fgets(line, BT_FILENAME_LEN, f) != NULL) {
+        count++;
+    }
+    fclose(f);
+
+    config->get_chunks.size = count;
+    config->get_chunks->chunks = (single_chunk*) malloc(sizeof(struct single_chunk) * count);
+
+    f = fopen(get_chunk_file, "r");
+    assert(f != NULL);
+    count = 0;
+     while (fgets(line, BT_FILENAME_LEN, f) != NULL) {
+        single_chunk* temp = &(config->get_chunks->chunks[count++]);
+        assert(sscanf(line, "%d %s", &(temp->id), &hash != 0);
+        /* convert 0x to char */
+        int i = 0;
+        while (hash[i] != '\n') {
+            int b;
+            sscanf(&hash[i], "%2x", &b);
+            temp->hash[i/2] = b;
+            i += 2;
+        }    
+    }
+
+    DPRINTF(DEBUG_INIT, "Read get chunk file: %d lines\n", count);
+    for (int i = 0; i < count; i++){
+        DPRINTF(DEBUG_INIT, "%d", config->get_chunks->chunks[i].id);
+        for (int j = 0; j < CHUNK_HASH_SIZE; j++)
+            DPRINTF(DEBUG_INIT, " %x", config->get_chunks->chunks[i].hash[j]);
+    }
+
+    fclose(f);
 }

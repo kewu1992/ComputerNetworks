@@ -7,6 +7,15 @@
  *
  * Skeleton for 15-441 Project 2.
  *
+ * ==================================================
+ * 
+ * Modified by: Ke Wu <kewu@andrew.cmu.edu>
+ *  
+ * Date: 10/23/2015
+ *
+ * Description: Skeleton for 15-441 Project 2, receive input from user or 
+ *              receive packets from peers, then process them. 
+ *
  */
 
 #include <sys/types.h>
@@ -16,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include "debug.h"
 #include "spiffy.h"
 #include "bt_parse.h"
@@ -26,6 +36,7 @@ void peer_run(bt_config_t *config);
 int main(int argc, char **argv) {
   bt_config_t config;
 
+  /* initialize configuration */
   bt_init(&config, argc, argv);
 
   DPRINTF(DEBUG_INIT, "peer.c main beginning\n");
@@ -43,42 +54,96 @@ int main(int argc, char **argv) {
     bt_dump_config(&config);
   }
 #endif
+
+  read_has_chunk_file(&config);
+
+  /* ignore SIGPIPE in case server is terminated due to broken pipe */
+  signal(SIGPIPE, SIG_IGN);
   
+  /* */
   peer_run(&config);
   return 0;
 }
 
 
 void process_inbound_udp(int sock) {
-  #define BUFLEN 1500
+  #define BUFLEN MAX_PACKET_LEN
   struct sockaddr_in from;
   socklen_t fromlen;
   char buf[BUFLEN];
 
   fromlen = sizeof(from);
-  spiffy_recvfrom(sock, buf, BUFLEN, 0, (struct sockaddr *) &from, &fromlen);
+  int ret = spiffy_recvfrom(sock, buf, BUFLEN, 0, (struct sockaddr *) &from, &fromlen);
 
-  printf("PROCESS_INBOUND_UDP SKELETON -- replace!\n"
-	 "Incoming message from %s:%d\n%s\n\n", 
-	 inet_ntoa(from.sin_addr),
-	 ntohs(from.sin_port),
-	 buf);
+  
+  DPRINTF(DEBUG_SOCKETS, "Incoming message from %s:%d\n%s\n\n", 
+     inet_ntoa(from.sin_addr),
+     ntohs(from.sin_port),
+     buf);
+  
+
+  /* TODO: Demultiplex */
+  int type = demultiplexing(ret, buf);
+  switch (type){
+    case 0:
+        process_whohas_packet(ret, buf, config, &from);
+        break;
+    case 1:
+        process_Ihave_packet(ret, buf, config, &from);
+        break;
+    case 2:
+        break;
+    case 3:
+        break;
+    case 4:
+        break;
+    case 5:
+        break; 
+  }
+
 }
 
-void process_get(char *chunkfile, char *outputfile) {
-  printf("PROCESS GET SKELETON CODE CALLED.  Fill me in!  (%s, %s)\n", 
-	chunkfile, outputfile);
+void process_get(char *chunkfile, char *outputfile, bt_config_t* config) {
+    read_get_chunk_file(config, chunkfile);
+    strcpy(config->output_file, outputfile);
+
+    /* TODO: generate WHOHAS packet */
+    int max_packet_len, last_packet_len, packets_size;
+    char** whohas_packet = generate_whohas(config->get_chunks->size,
+                            config->get_chunks->hash, CHUNK_HASH_SIZE,
+                            &packets_size, &last_packet_len);
+    max_packet_len = MAX_PACKET_LEN;
+
+    bt_peer_t *peer = config->peers;
+    while (peer) {
+        for (int i = 0; i < packets_size; i++){
+            int has_send = 0, ret;
+            int packet_len = (i == packets_size-1) ? last_packet_len : max_packet_len;
+            while (has_send < packet_len){
+                ret = spiffy_sendto(config->sock, whohas_packet[i] + has_send, 
+                                packet_len - has_send, 0, 
+                                (struct sockaddr *)&peer->addr, sizeof(peer->addr));
+                if (ret < 0) {
+                    perror("send packet error");
+                    exit(-1);
+                } else
+                    has_send += ret;
+            }  
+        }
+        peer = peer->next;
+    }
 }
 
 void handle_user_input(char *line, void *cbdata) {
   char chunkf[128], outf[128];
+  bt_config_t *config = (bt_config_t*) cbdata;
 
   bzero(chunkf, sizeof(chunkf));
   bzero(outf, sizeof(outf));
 
   if (sscanf(line, "GET %120s %120s", chunkf, outf)) {
     if (strlen(outf) > 0) {
-      process_get(chunkf, outf);
+      process_get(chunkf, outf, config);
     }
   }
 }
@@ -99,6 +164,8 @@ void peer_run(bt_config_t *config) {
     perror("peer_run could not create socket");
     exit(-1);
   }
+
+  config->sock = sock;
   
   bzero(&myaddr, sizeof(myaddr));
   myaddr.sin_family = AF_INET;
@@ -120,13 +187,14 @@ void peer_run(bt_config_t *config) {
     nfds = select(sock+1, &readfds, NULL, NULL, NULL);
     
     if (nfds > 0) {
-      if (FD_ISSET(sock, &readfds)) {
-	process_inbound_udp(sock);
-      }
-      
-      if (FD_ISSET(STDIN_FILENO, &readfds)) {
-	process_user_input(STDIN_FILENO, userbuf, handle_user_input,
-			   "Currently unused");
+        if (FD_ISSET(sock, &readfds)) {
+            process_inbound_udp(sock);
+        }
+    
+        /* remember to free config->get_chunks->chunks when finish downloading */
+        if (FD_ISSET(STDIN_FILENO, &readfds)) {
+            process_user_input(STDIN_FILENO, userbuf, handle_user_input,
+               (void*)config);
       }
     }
   }
