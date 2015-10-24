@@ -21,6 +21,11 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
     }
     free(hash);
 
+    /* if I don't have any of the pack, then just return */
+    if (count == 0)
+        continue;
+
+
     /* get the hash value of the chunks that I have */
     hash = (char**) malloc(sizeof(char*) * count);
     for (int i = 0; i < count; i++){
