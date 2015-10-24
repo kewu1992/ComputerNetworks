@@ -128,6 +128,11 @@ void process_get(bt_config_t* config) {
 
     bt_peer_t *peer = config->peers;
     while (peer) {
+        /* should not send WHOHAS to myself */
+        if (peer->id == config->identity){
+          peer = peer->next;
+          continue;
+        }
         for (int i = 0; i < packets_size; i++){
             int has_send = 0, ret;
             int packet_len = 
