@@ -13,19 +13,19 @@ char ** generate_whohas(int size, char ** hash, int h_len, int * packets_size, i
     // packets_size --> number of whohas packets generated
     // last_p_len --> last packet length after packet cutting
     int size_hashes = size * h_len;
-    int total_hash_size_in_max_pkt = MAX_PKT_LEN - PKT_HEADER_LEN - WHOHAS_PAYLOAD_HL;
+    int total_hash_size_in_max_pkt = MAX_PKT_LEN - PKT_HEADER_LEN - WI_PAYLOAD_HL;
 
     int quotient = size_hashes / total_hash_size_in_max_pkt;
     int remainder = size_hashes % total_hash_size_in_max_pkt;
     int n_packets = 0;
     int last_packet_len = 0;
     if (remainder == 0) {
-        // fully divided
+        // no leftover bytes
         n_packets = quotient;
         last_packet_len = MAX_PKT_LEN;
     } else {
         n_packets = quotient + 1;
-        last_packet_len = remainder + WHOHAS_PAYLOAD_HL + PKT_HEADER_LEN;
+        last_packet_len = remainder + WI_PAYLOAD_HL + PKT_HEADER_LEN;
     }
 
     char ** packets_arr = (char **) malloc(n_packets * sizeof(char *));
@@ -48,14 +48,14 @@ char ** generate_whohas(int size, char ** hash, int h_len, int * packets_size, i
 }
 
 int get_n_hashes_in_pkt(int pk_len, int h_len) {
-    return (pk_len - PKT_HEADER_LEN - WHOHAS_PAYLOAD_HL) / h_len;
+    return (pk_len - PKT_HEADER_LEN - WI_PAYLOAD_HL) / h_len;
 }
 
 
 void create_wi_pkt_header(char * ptr, int pk_len, char pkt_type) {
     // create packet header
-    short magic_num = htons(15441);
-    char version = 1;
+    short magic_num = htons(MAGIC_NUMBER);
+    char version = VERSION;
     unsigned short header_len = htons(PKT_HEADER_LEN);
     unsigned short total_packet_len = htons((unsigned short) pk_len);
     memcpy(ptr, &magic_num, 2);
@@ -97,7 +97,7 @@ char * generate_one_wi_pkt(int pk_len, char ** hashes, int n_hashes, int h_len, 
     ptr += PKT_HEADER_LEN;
 
     create_wi_pkt_payload_header(ptr, n_hashes);
-    ptr += WHOHAS_PAYLOAD_HL;
+    ptr += WI_PAYLOAD_HL;
 
     create_wi_pkt_hashes(ptr, n_hashes, hashes, h_len);
     return one_wi;
@@ -119,7 +119,7 @@ char ** parse_wi_pkt(int len, char * data, int h_len, int * size) {
     ptr += PKT_HEADER_LEN;
     unsigned char n_hashes = 0;
     memcpy(&n_hashes, ptr, 1);
-    ptr += WHOHAS_PAYLOAD_HL;
+    ptr += WI_PAYLOAD_HL;
     // end parsing # of hashes
 
     // parse chunk hash one by one
@@ -142,7 +142,7 @@ char * generate_Ihave(int size, char ** hash, int h_len, int * len) {
     // hash --> array of hashes
     // h_len --> one hash size, 20
     // len --> total # of bytes in 1 Ihave packet
-    int pk_len = size * h_len + WHOHAS_PAYLOAD_HL + PKT_HEADER_LEN;
+    int pk_len = size * h_len + WI_PAYLOAD_HL + PKT_HEADER_LEN;
     *len = pk_len;
     return generate_one_wi_pkt(pk_len, hash, size, h_len, 1);
 }
