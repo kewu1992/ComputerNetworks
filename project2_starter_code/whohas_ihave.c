@@ -46,7 +46,7 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
     int has_send = 0, ret;
     while (has_send < len){
         ret = spiffy_sendto(config->sock, Ihave_packet + has_send, 
-                    len - has_send, 0, (struct sockaddr *)&from, sizeof(from));
+                    len - has_send, 0, (struct sockaddr *)from, sizeof(*from));
         if (ret < 0) {
             perror("send packet error");
             exit(-1);
