@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
   /* ignore SIGPIPE in case server is terminated due to broken pipe */
   signal(SIGPIPE, SIG_IGN);
   
-  /* */
+  /* main routine */
   peer_run(&config);
   return 0;
 }
@@ -74,6 +74,7 @@ void process_inbound_udp(int sock, bt_config_t *config) {
   socklen_t fromlen;
   char buf[BUFLEN];
 
+  /* receive UDP packet */
   fromlen = sizeof(from);
   int ret = spiffy_recvfrom(sock, buf, BUFLEN, 0, 
                             (struct sockaddr *) &from, &fromlen);
@@ -84,12 +85,14 @@ void process_inbound_udp(int sock, bt_config_t *config) {
      buf);
   
 
-  /* TODO: Demultiplex */
+  /* Demultiplex */
   int type = demultiplexing(ret, buf);
   switch (type){
+    /* received a WHOHAS packet */
     case 0:
         process_whohas_packet(ret, buf, config, &from);
         break;
+    /* received a IHAVE packet */
     case 1:
         process_Ihave_packet(ret, buf, config, &from);
         break;
@@ -114,7 +117,8 @@ void process_get(bt_config_t* config) {
         memcpy(hashs[i], config->get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
     }
 
-    /* generate WHOHAS packet */
+    /* generate WHOHAS packets, maybe more than 1 packet due to max length 
+     * limit of a UDP packet */
     int max_packet_len, last_packet_len, packets_size;
     char** whohas_packet = generate_whohas(config->get_chunks.size,
                                             hashs, CHUNK_HASH_SIZE,
@@ -126,6 +130,7 @@ void process_get(bt_config_t* config) {
 
     max_packet_len = MAX_PKT_LEN;
 
+    /* send WHOHAS packet to all peers */
     bt_peer_t *peer = config->peers;
     while (peer) {
         /* should not send WHOHAS to myself */
@@ -166,8 +171,11 @@ void handle_user_input(char *line, void *cbdata) {
 
   if (sscanf(line, "GET %120s %120s", chunkf, outf)) {
     if (strlen(outf) > 0) {
+        /* read get_chunk_file */
         read_get_chunk_file(config, chunkf);
+        /* save output filename */
         strcpy(config->output_file, outf);
+        /* flood WHOHAS packet */
         process_get(config);
     }
   }
@@ -212,11 +220,13 @@ void peer_run(bt_config_t *config) {
     nfds = select(sock+1, &readfds, NULL, NULL, NULL);
     
     if (nfds > 0) {
+        /* a packet comes from Internet */
         if (FD_ISSET(sock, &readfds)) {
             process_inbound_udp(sock, config);
         }
-    
+      
         /* remember to free config->get_chunks->chunks when finish downloading */
+        /* get input from stdin */
         if (FD_ISSET(STDIN_FILENO, &readfds)) {
             process_user_input(STDIN_FILENO, userbuf, handle_user_input,
                (void*)config);
