@@ -32,6 +32,9 @@
 #include "input_buffer.h"
 #include "whohas_ihave.h"
 #include "pkt_helper.h"
+#include "helper.h"
+
+#define SELECT_TIMEOUT 5
 
 void peer_run(bt_config_t *config);
 
@@ -133,25 +136,18 @@ void process_get(bt_config_t* config) {
     /* send WHOHAS packet to all peers */
     bt_peer_t *peer = config->peers;
     while (peer) {
-        /* should not send WHOHAS to myself */
-        if (peer->id == config->identity){
+        /* should not send WHOHAS to myself,
+           should not send WHOHAS to the peer that known its has_chunk info */
+        if (peer->id == config->identity || peer->has_chunks.size != -1){
           peer = peer->next;
           continue;
         }
         for (int i = 0; i < packets_size; i++){
-            int has_send = 0, ret;
             int packet_len = 
                     (i == packets_size-1) ? last_packet_len : max_packet_len;
-            while (has_send < packet_len){
-                ret = spiffy_sendto(config->sock, whohas_packet[i] + has_send, 
-                            packet_len - has_send, 0, 
-                            (struct sockaddr *)&peer->addr, sizeof(peer->addr));
-                if (ret < 0) {
-                    perror("send packet error");
-                    exit(-1);
-                } else
-                    has_send += ret;
-            }  
+
+            send_packet(config->sock, whohas_packet[i], packet_len, 0, 
+                        (struct sockaddr *)&peer->addr, sizeof(peer->addr));
         }
         peer = peer->next;
     }
@@ -185,7 +181,7 @@ void handle_user_input(char *line, void *cbdata) {
 void peer_run(bt_config_t *config) {
   int sock;
   struct sockaddr_in myaddr;
-  fd_set readfds;
+  fd_set readyset;
   struct user_iobuf *userbuf;
   
   if ((userbuf = create_userbuf()) == NULL) {
@@ -212,25 +208,34 @@ void peer_run(bt_config_t *config) {
   
   spiffy_init(config->identity, (struct sockaddr *)&myaddr, sizeof(myaddr));
   
+  struct timeval timeoutSelect = {SELECT_TIMEOUT, 0};
+
+  /* init readset */
+  FD_ZERO(&config->readset)
+  FD_SET(STDIN_FILENO, &config->readset);
+  FD_SET(sock, &config->readset);
+  config->max_fd = sock;
   while (1) {
     int nfds;
-    FD_SET(STDIN_FILENO, &readfds);
-    FD_SET(sock, &readfds);
-    
-    nfds = select(sock+1, &readfds, NULL, NULL, NULL);
+    readyset = config->readset;    
+    nfds = select(config->max_fd+1, &readyset, NULL, NULL, &timeoutSelect);
     
     if (nfds > 0) {
         /* a packet comes from Internet */
-        if (FD_ISSET(sock, &readfds)) {
+        if (FD_ISSET(sock, &readyset)) {
             process_inbound_udp(sock, config);
         }
       
         /* remember to free config->get_chunks->chunks when finish downloading */
         /* get input from stdin */
-        if (FD_ISSET(STDIN_FILENO, &readfds)) {
+        if (FD_ISSET(STDIN_FILENO, &readyset)) {
             process_user_input(STDIN_FILENO, userbuf, handle_user_input,
                (void*)config);
       }
+    } else {
+      // SELECT TIMEOUT, check if know all peers' has_chunk info
+      if (config->known_peer_num < config->peer_num)
+          process_get(config);
     }
   }
 }

@@ -46,6 +46,11 @@ typedef struct bt_peer_s {
 
   /* added by Ke Wu, represents which chunks the peer owns */
   struct many_chunks has_chunks;
+  /* added by Ke Wu, represents if the peer is crashed */
+  int is_crash;
+  /* added by Ke Wu, represents connction with the peer */
+  struct Connection* conn;
+
 } bt_peer_t;
 
 struct bt_config_s {
@@ -60,17 +65,32 @@ struct bt_config_s {
   int argc;
   char **argv;
 
+  int peer_num;
   bt_peer_t *peers;
 
   /* added by Ke Wu, represents which chunks I want to get (download) */
   struct many_chunks get_chunks;
-  /* added by Ke Wu, represents which chunks I onw */
+  /* added by Ke Wu, represents which chunks I own */
   struct many_chunks has_chunks;
   /* added by Ke Wu, represents my socket file descriptor */
   int sock;
 
-  /* added by Adam Li, represents if it is ready to start downloading procedure, 0 for false, otherwise 1 */
+  /* added by Ke Wu, represents read set of select */
+  fd_set readset;
+
+  /* added by Adam Li, represents if it is ready to start downloading procedure, 
+      0 for false, otherwise 1 */
   int is_check;
+
+  /* added by Ke Wu, represents the number of current download connctions */
+  int cur_download_num;
+  /* added by Ke Wu, represents the number of current upload connctions */
+  int cur_upload_num;
+  /* added by Ke Wu, represents the number of peers that known has_chunk info */
+  int known_peer_num;
+  /* added by Ke Wu, represents the maximum number of file_descriptor */
+  int max_fd;
+
 };
 typedef struct bt_config_s bt_config_t;
 

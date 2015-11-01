@@ -45,3 +45,17 @@ bt_peer_t* find_peer(bt_peer_t *peers, struct sockaddr_in* addr) {
 
 	return NULL;
 }
+
+void send_packet(int socket, char* data, size_t packet_len, int flag, 
+				 struct sockaddr *dest_addr, socklen_t addr_len) {
+	int has_send = 0, ret;
+    while (has_send < packet_len){
+        ret = spiffy_sendto(socket, data + has_send, packet_len - has_send, 0, 
+                    		dest_addr, addr_len);
+        if (ret < 0) {
+            perror("send packet error");
+            exit(-1);
+        } else
+            has_send += ret;
+    }  
+}

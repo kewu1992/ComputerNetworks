@@ -77,17 +77,27 @@ void process_Ihave_packet(int len, char* packet, bt_config_t* config,
     /* 2. find the peer that send the IHAVE packet */
     bt_peer_t* peer = find_peer(config->peers, from);
 
-    peer->has_chunks.size = size;
-    peer->has_chunks.chunks = (struct single_chunk*)
-                                malloc(sizeof(struct single_chunk) * size);
-    /* 3. save IHAVE info of the peer */
-    for (int i  = 0; i < size; i++){
-        memcpy(peer->has_chunks.chunks[i].hash, hash[i], CHUNK_HASH_SIZE);
-        /* free memory that is allocted from parse_Ihave() */
-        free(hash[i]);
+    if (peer->has_chunks.size == -1){
+        config->known_peer_num++;
+        peer->has_chunks.size = size;
+        peer->has_chunks.chunks = (struct single_chunk*)
+                                    malloc(sizeof(struct single_chunk) * size);
+        /* 3. save IHAVE info of the peer */
+        for (int i  = 0; i < size; i++){
+            memcpy(peer->has_chunks.chunks[i].hash, hash[i], CHUNK_HASH_SIZE);
+            /* free memory that is allocted from parse_Ihave() */
+            free(hash[i]);
+        }
+        free(hash);  
+    } else {
+        /* already know the info, just free memory*/
+        for (int i  = 0; i < size; i++){
+            /* free memory that is allocted from parse_Ihave() */
+            free(hash[i]);
+        }
+        free(hash);  
     }
-    free(hash);
 
     /* 4. set is_check true */
-    config->is_check = 1;
+        config->is_check = 1;   
 }
