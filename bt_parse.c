@@ -161,9 +161,16 @@ void bt_parse_peer_list(bt_config_t *config) {
     /* at first, don't know what packets that other peers own */
     node->has_chunks.size = -1;
     node->has_chunks.chunks = NULL;    
+    /* at first, no peer is crashed */
+    node->is_crash = 0;
+    /* at first, no conncetion */
+    node->conn = NULL;
 
+    /* gererate linked list */
     node->next = config->peers;
     config->peers = node;
+    /* inc peer number */
+    config->peer_num += 1;
   }
 }
 
