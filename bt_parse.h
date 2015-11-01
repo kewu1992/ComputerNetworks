@@ -8,7 +8,7 @@
  * stubs.
  *
  * Modified by: Ke Wu <kewu@andrew.cmu.edu>
- *  
+ *
  * Date: 10/23/2015
  *
  * Description: add two functions to read get_chunk_file and has_chunk_file
@@ -57,7 +57,7 @@ struct bt_config_s {
   short identity;
   unsigned short myport;
 
-  int argc; 
+  int argc;
   char **argv;
 
   bt_peer_t *peers;
@@ -68,6 +68,9 @@ struct bt_config_s {
   struct many_chunks has_chunks;
   /* added by Ke Wu, represents my socket file descriptor */
   int sock;
+
+  /* added by Adam Li, represents if it is ready to start downloading procedure, 0 for false, otherwise 1 */
+  int is_check;
 };
 typedef struct bt_config_s bt_config_t;
 
