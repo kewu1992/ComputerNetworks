@@ -2,7 +2,7 @@
  * whohas_ihave.c
  *
  * Authors: Ke Wu <kewu@andrew.cmu.edu>
- *  
+ *
  * Date: 10/23/2015
  *
  * Description: used for processing WHOHAS packet and IHAVE packet
@@ -37,11 +37,10 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
     if (count == 0)
         return;
 
-    /* get the hash value of the chunks that I have */
-    hash = (char**) malloc(sizeof(char*) * count);
+    /* get the hash value of the chunks that I have */ hash = (char**) malloc(sizeof(char*) * count);
     for (int i = 0; i < count; i++){
         hash[i] = (char*) malloc(CHUNK_HASH_SIZE);
-        memcpy(hash[i], config->has_chunks.chunks[had_chunk_index[i]].hash, 
+        memcpy(hash[i], config->has_chunks.chunks[had_chunk_index[i]].hash,
                 CHUNK_HASH_SIZE);
     }
 
@@ -56,7 +55,7 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
     /* send packet */
     int has_send = 0, ret;
     while (has_send < len){
-        ret = spiffy_sendto(config->sock, Ihave_packet + has_send, 
+        ret = spiffy_sendto(config->sock, Ihave_packet + has_send,
                     len - has_send, 0, (struct sockaddr *)from, sizeof(*from));
         if (ret < 0) {
             perror("send packet error");
@@ -66,7 +65,7 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
     }
 
     /* free memory that is allocted from generate_Ihave() */
-    free(Ihave_packet);  
+    free(Ihave_packet);
 }
 
 void process_Ihave_packet(int len, char* packet, bt_config_t* config,
@@ -79,13 +78,16 @@ void process_Ihave_packet(int len, char* packet, bt_config_t* config,
     bt_peer_t* peer = find_peer(config->peers, from);
 
     peer->has_chunks.size = size;
-    peer->has_chunks.chunks = (struct single_chunk*) 
+    peer->has_chunks.chunks = (struct single_chunk*)
                                 malloc(sizeof(struct single_chunk) * size);
     /* 3. save IHAVE info of the peer */
     for (int i  = 0; i < size; i++){
         memcpy(peer->has_chunks.chunks[i].hash, hash[i], CHUNK_HASH_SIZE);
         /* free memory that is allocted from parse_Ihave() */
         free(hash[i]);
-    }    
+    }
     free(hash);
+
+    /* 4. set is_check true */
+    config->is_check = 1;
 }
