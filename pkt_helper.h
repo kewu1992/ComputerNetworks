@@ -66,5 +66,9 @@ int demultiplexing(int len, char * data);
 char * generate_get(char * hash, int * len);
 char * parse_get(char * pkt);
 char ** generate_data(char * data, int seq_num, int * packets_size, int * last_p_len);
+char * parse_data(char * pkt, int * seq_num, int * len);
+char * generate_ack(int ack_num, int * len);
+int parse_ack(char * pkt);
+char * generate_denied(int * len);
 
 #endif

@@ -253,3 +253,104 @@ char ** generate_data(char * data, int seq_num, int * packets_size, int * last_p
     return packets_arr;
 }
 
+char * parse_data(char * pkt, int * seq_num, int * len) {
+    // pkt --> one data pkt
+    // seq_num --> sequence number, 4 bytes
+    // len --> chunk data size in pkt
+    char * ptr = pkt;
+    ptr += 6;
+
+    // begin get packet length
+    uint16_t pkt_len = 0;
+    memcpy(&pkt_len, ptr, 2);
+    pkt_len = ntohs(pkt_len);
+    // end get packet length
+
+    ptr += 2;
+
+    // begin get sequence number
+    uint32_t seq_num_host = 0;
+    memcpy(&seq_num_host, ptr, 4);
+    seq_num_host = ntohl(seq_num_host);
+    // end get sequence number
+
+    ptr += 8;
+
+    // begin get chunk data
+    int chunk_data_size = pkt_len - PKT_HEADER_LEN;
+    char * chunk_data = (char *) malloc(chunk_data_size);
+    memcpy(chunk_data, ptr, chunk_data_size);
+    // end get chunk data
+
+    *seq_num = seq_num_host;
+    *len = chunk_data_size;
+    return chunk_data;
+}
+
+char * generate_ack(int ack_num, int * len) {
+    // ack_num --> ack number for this packet
+    // len --> packet length in bytes
+    int pk_len = PKT_HEADER_LEN;
+    char * one_ack = (char *) malloc(pk_len);
+    char * ptr = one_ack;
+
+    // begin create ack pkt header
+    short magic_num = htons(MAGIC_NUMBER);
+    char version = VERSION;
+    char pkt_type = ACK_PKT;
+    unsigned short header_len = htons(PKT_HEADER_LEN);
+    unsigned short total_packet_len = htons((unsigned short) pk_len);
+    uint32_t ack_num_nw = htonl((uint32_t) ack_num);
+    memcpy(ptr, &magic_num, 2);
+    ptr += 2;
+    memcpy(ptr, &version, 1);
+    ptr++;
+    memcpy(ptr, &pkt_type, 1);
+    ptr++;
+    memcpy(ptr, &header_len, 2);
+    ptr += 2;
+    memcpy(ptr, &total_packet_len, 2);
+    ptr += 6;
+    memcpy(ptr, &ack_num_nw, 4);
+    // end create ack pkt header
+
+    *len = pk_len;
+    return one_ack;
+}
+
+int parse_ack(char * pkt) {
+    char * ptr = pkt;
+    ptr += 12;
+    uint32_t ack_num = 0;
+    memcpy(&ack_num, ptr, 4);
+    ack_num = ntohl(ack_num);
+
+    return ack_num;
+}
+
+char * generate_denied(int * len) {
+    // len --> packet length in bytes
+    int pk_len = PKT_HEADER_LEN;
+    char * one_deny = (char *) malloc(pk_len);
+    char * ptr = one_deny;
+
+    // begin create ack pkt header
+    short magic_num = htons(MAGIC_NUMBER);
+    char version = VERSION;
+    char pkt_type = DENIED_PKT;
+    unsigned short header_len = htons(PKT_HEADER_LEN);
+    unsigned short total_packet_len = htons((unsigned short) pk_len);
+    memcpy(ptr, &magic_num, 2);
+    ptr += 2;
+    memcpy(ptr, &version, 1);
+    ptr++;
+    memcpy(ptr, &pkt_type, 1);
+    ptr++;
+    memcpy(ptr, &header_len, 2);
+    ptr += 2;
+    memcpy(ptr, &total_packet_len, 2);
+    // end create ack pkt header
+
+    *len = pk_len;
+    return one_deny;
+}
