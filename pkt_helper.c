@@ -38,7 +38,7 @@ char ** generate_whohas(int size, char ** hash, int h_len, int * packets_size, i
         }
         // number of hashes in this packet
         int n_hashes = get_n_hashes_in_pkt(pk_len, h_len);
-        char * one_whohas = generate_one_wi_pkt(pk_len, hash, n_hashes, h_len, 0);
+        char * one_whohas = generate_one_wi_pkt(pk_len, hash, n_hashes, h_len, WHOHAS_PKT);
         packets_arr[i] = one_whohas;
         hash += n_hashes;
     }
@@ -52,7 +52,7 @@ int get_n_hashes_in_pkt(int pk_len, int h_len) {
 }
 
 
-void create_wi_pkt_header(char * ptr, int pk_len, char pkt_type) {
+void create_pkt_header(char * ptr, int pk_len, char pkt_type) {
     // create packet header
     short magic_num = htons(MAGIC_NUMBER);
     char version = VERSION;
@@ -77,7 +77,7 @@ void create_wi_pkt_payload_header(char * ptr, int n_hashes) {
     // end create packet payload header
 }
 
-void create_wi_pkt_hashes(char * ptr, int n_hashes, char ** hashes, int h_len) {
+void create_pkt_hashes(char * ptr, int n_hashes, char ** hashes, int h_len) {
     // put in hashes one by one
     for (int i = 0; i < n_hashes; i++) {
         char * hash = hashes[i];
@@ -93,13 +93,13 @@ char * generate_one_wi_pkt(int pk_len, char ** hashes, int n_hashes, int h_len, 
     char * one_wi = (char *) malloc(pk_len);
     char * ptr = one_wi;
 
-    create_wi_pkt_header(ptr, pk_len, pkt_type);
+    create_pkt_header(ptr, pk_len, pkt_type);
     ptr += PKT_HEADER_LEN;
 
     create_wi_pkt_payload_header(ptr, n_hashes);
     ptr += WI_PAYLOAD_HL;
 
-    create_wi_pkt_hashes(ptr, n_hashes, hashes, h_len);
+    create_pkt_hashes(ptr, n_hashes, hashes, h_len);
     return one_wi;
 }
 
@@ -144,7 +144,7 @@ char * generate_Ihave(int size, char ** hash, int h_len, int * len) {
     // len --> total # of bytes in 1 Ihave packet
     int pk_len = size * h_len + WI_PAYLOAD_HL + PKT_HEADER_LEN;
     *len = pk_len;
-    return generate_one_wi_pkt(pk_len, hash, size, h_len, 1);
+    return generate_one_wi_pkt(pk_len, hash, size, h_len, IHAVE_PKT);
 }
 
 char ** parse_Ihave(int len, char * data, int h_len, int * size) {
@@ -156,3 +156,34 @@ int demultiplexing(int len, char * data) {
     ptr += 3;
     return *ptr;
 }
+
+char * generate_get(char * hash) {
+    int pk_len = PKT_HEADER_LEN + CHUNK_HASH_SIZE;
+    char * one_get = (char *) malloc(pk_len);
+    char * ptr = one_get;
+
+    create_pkt_header(ptr, pk_len, GET_PKT);
+    ptr += PKT_HEADER_LEN;
+
+    char * hashes[] = { hash };
+
+    create_pkt_hashes(ptr, 1, hashes, CHUNK_HASH_SIZE);
+    return one_get;
+}
+
+char * parse_get(char * pkt) {
+    char * ptr = pkt;
+    ptr += PKT_HEADER_LEN;
+
+    // parse chunk hash
+    char * hash = (char *) malloc(CHUNK_HASH_SIZE);
+    memcpy(hash, ptr, CHUNK_HASH_SIZE);
+    // end parsing chunk hash
+
+    return hash;
+}
+
+char * generate_data() {
+    return NULL;
+}
+
