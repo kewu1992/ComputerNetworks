@@ -13,7 +13,9 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <stdint.h>
 #include "bt_parse.h"
+
 
 /**
  * Constants
@@ -24,6 +26,7 @@
 #define WI_PAYLOAD_HL 4     // payload header lengh in bytes for WHOHAS or IHave headers
 #define MAGIC_NUMBER 15441  // magic number in header
 #define VERSION 1           // version number in header
+#define CHUNK_DATA_SIZE 512 * 1024
 
 enum pkt_type { WHOHAS_PKT, IHAVE_PKT, GET_PKT, DATA_PKT, ACK_PKT, DENIED_PKT };
 
@@ -60,8 +63,8 @@ char ** parse_wi_pkt(int len, char * data, int h_len, int * size);
 // returns the type of this packet, e.g. is it whohas or Ihave or others
 int demultiplexing(int len, char * data);
 
-char * generate_get(char * hash);
+char * generate_get(char * hash, int * len);
 char * parse_get(char * pkt);
-char * generate_data();
+char ** generate_data(char * data, int seq_num, int * packets_size, int * last_p_len);
 
 #endif

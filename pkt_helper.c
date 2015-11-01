@@ -157,7 +157,7 @@ int demultiplexing(int len, char * data) {
     return *ptr;
 }
 
-char * generate_get(char * hash) {
+char * generate_get(char * hash, int * len) {
     int pk_len = PKT_HEADER_LEN + CHUNK_HASH_SIZE;
     char * one_get = (char *) malloc(pk_len);
     char * ptr = one_get;
@@ -168,6 +168,8 @@ char * generate_get(char * hash) {
     char * hashes[] = { hash };
 
     create_pkt_hashes(ptr, 1, hashes, CHUNK_HASH_SIZE);
+
+    *len = pk_len;
     return one_get;
 }
 
@@ -183,7 +185,71 @@ char * parse_get(char * pkt) {
     return hash;
 }
 
-char * generate_data() {
-    return NULL;
+char ** generate_data(char * data, int seq_num, int * packets_size, int * last_p_len) {
+    // data --> actual chunk data from disk
+    // seq_num --> sequence number
+    // packets_size --> number of whohas packets generated
+    int total_chunk_data_size_in_max_pkt = MAX_PKT_LEN - PKT_HEADER_LEN;
+
+    int quotient = CHUNK_DATA_SIZE / total_chunk_data_size_in_max_pkt;
+    int remainder = CHUNK_DATA_SIZE % total_chunk_data_size_in_max_pkt;
+    int n_packets = 0;
+    int last_packet_len = 0;
+    if (remainder == 0) {
+        // no leftover bytes
+        n_packets = quotient;
+        last_packet_len = MAX_PKT_LEN;
+    } else {
+        n_packets = quotient + 1;
+        last_packet_len = remainder + PKT_HEADER_LEN;
+    }
+
+    char ** packets_arr = (char **) malloc(n_packets * sizeof(char *));
+    for (int i = 0; i < n_packets; i++) {
+        int pk_len = 0;
+        if (i == n_packets - 1) {
+            pk_len = last_packet_len;
+        } else {
+            pk_len = MAX_PKT_LEN;
+        }
+
+        // begin generate one data pkt
+        char * one_data = (char *) malloc(pk_len);
+        char * ptr = one_data;
+
+        // begin create data pkt header
+        short magic_num = htons(MAGIC_NUMBER);
+        char version = VERSION;
+        char pkt_type = DATA_PKT;
+        unsigned short header_len = htons(PKT_HEADER_LEN);
+        unsigned short total_packet_len = htons((unsigned short) pk_len);
+        uint32_t seq_num_nw = htonl((uint32_t) seq_num);
+        memcpy(ptr, &magic_num, 2);
+        ptr += 2;
+        memcpy(ptr, &version, 1);
+        ptr++;
+        memcpy(ptr, &pkt_type, 1);
+        ptr++;
+        memcpy(ptr, &header_len, 2);
+        ptr += 2;
+        memcpy(ptr, &total_packet_len, 2);
+        ptr += 2;
+        memcpy(ptr, &seq_num_nw, 4);
+        ptr += 8;
+        // end create data pkt header
+
+        // begin create data pkt chunk data
+        int curr_pkt_chunk_data_size = pk_len - PKT_HEADER_LEN;
+        memcpy(ptr, data, curr_pkt_chunk_data_size);
+        data += curr_pkt_chunk_data_size;
+        // end create data pkt chunk data
+
+        packets_arr[i] = one_data;
+        // end generate one data pkt
+    }
+
+    *packets_size = n_packets;
+    *last_p_len = last_packet_len;
+    return packets_arr;
 }
 
