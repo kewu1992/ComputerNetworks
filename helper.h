@@ -25,3 +25,5 @@ bt_peer_t* find_peer(bt_peer_t *peers, struct sockaddr_in* addr);
 
 void send_packet(int socket, char* data, size_t packet_len, int flag, 
 				 struct sockaddr *dest_addr, socklen_t addr_len);
+
+char* read_chunk_data_from_file(bt_config_t* config, char* hash);

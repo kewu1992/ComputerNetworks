@@ -1,8 +1,10 @@
 #include <sys/timerfd.h>
 
-struct Connection * init_connection(struct bt_peer_t* peer,
-					 int is_download){
+struct Connection * init_connection(struct bt_peer_t* peer, int is_download,
+									char** packets, int size, 
+									int max_pkt_len, int last_pkt_len){
     struct Connection * con = (struct Connection *) malloc(sizeof(struct Connection));
+	
 	con->is_download = is_download;
 
 	con->peer = peer;
@@ -10,11 +12,22 @@ struct Connection * init_connection(struct bt_peer_t* peer,
 	con->timer_fd = timerfd_create(CLOCK_REALTIME, 0);
 
 	/* whole data */
-	con->whole_size = 1;
-	con->packets = (char**) malloc(sizeof(char*));
-	con->packets[0] = NULL;
-	con->packets_len = (int*) malloc(sizeof(int));
-	con->packets_len[0] = 0;
+	if (!is_download){
+		/* upload, array is passed from outside */
+		con->whole_size = size;
+		con->packets = packets;
+		con->packets_len = (int*) malloc(sizeof(int) * size);
+		for (int i = 0; i < size-1; i++)
+			con->packets_len[i] = max_pkt_len;
+		con->packets_len[size-1] = last_pkt_len;
+	} else {
+		/* download, array is auto scalling */
+		con->whole_size = 1;
+		con->packets = (char**) malloc(sizeof(char*));
+		con->packets[0] = NULL;
+		con->packets_len = (int*) malloc(sizeof(int));
+		con->packets_len[0] = 0;	
+	}
 
 	/* window data */
 	con->last_pkt = 0;
@@ -98,7 +111,8 @@ int window_recv_packet(struct Connection* con, int pkt_seq,
 }
 
 int window_is_able_send(struct Connection* con){
-	return (con->cur_pkt - con->last_pkt < con->window_size);
+	return ((con->cur_pkt - con->last_pkt < con->window_size) &&
+			(con->cur_pkt < con->whole_size));
 }
 
 int window_ack_packet(struct Connection* con, int ack){

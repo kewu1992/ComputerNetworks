@@ -19,8 +19,11 @@ void process_data_packet(char* packet, bt_config_t* config,
 		return;
 	}
 
+	peer->down_con->successive_fail = 0;
+
 	/* 3. store the data packet to window, get ack number*/
 	int ack_num = window_recv_packet(peer->down_con, seq_num, data, len);
+	/* do not free data, it should be free when connection is destroied */
 
 	/* 4. send ack packet */
 	send_ack_packet(ack_num, config, peer); 
@@ -33,7 +36,7 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 					toPeer->up_con->packets_len[toPeer->up_con->last_pkt], 0,
 					(struct sockaddr *)&toPeer->addr, sizeof(toPeer->addr));
 	} else {
-		while(window_is_able_send(toPeer->up_con->)){
+		while(window_is_able_send(toPeer->up_con)){
 			send_packet(config->sock, 
 					toPeer->up_con->packets[toPeer->up_con->cur_pkt], 
 					toPeer->up_con->packets_len[toPeer->up_con->cur_pkt], 0,

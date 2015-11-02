@@ -59,3 +59,29 @@ void send_packet(int socket, char* data, size_t packet_len, int flag,
             has_send += ret;
     }  
 }
+
+char* read_chunk_data_from_file(bt_config_t* config, char* hash){
+	int chunk_index = find_chunk(&config->has_chunks, hash);
+	int chunk_id = config->has_chunks.chunks[chunk_index].id;
+	
+	char buf[BT_FILENAME_LEN];
+	FILE* master_chunk_file = fopen(config->chunk_file, "r");
+	if (fgets(buf, sizeof(buf), master_chunk_file) == NULL){
+		perror("read master chunk file error");
+		exit(-1);
+	}
+	fclose(master_chunk_file);
+
+	FILE* master_data_file = fopen(buf+6, "r");
+	fseek(master_data_file, chunk_id * 512 * 1024, SEEK_SET);
+
+	char* data = malloc(512 * 1024);
+	int ret = fread(data, 1, 512*1024, master_data_file);
+	if (ret < 512*1024){
+		perror("read master data file error");
+		exit(-1);
+	}
+	fclose(master_data_file);
+	
+	return data;
+}

@@ -16,6 +16,8 @@ void process_ack_packet(char* packet, bt_config_t* config,
 		return;
 	}
 
+	peer->up_con->successive_fail = 0;
+
 	/* 3. ack to window */
 	int is_resend = window_ack_packet(peer->up_con, ack_num);
 
