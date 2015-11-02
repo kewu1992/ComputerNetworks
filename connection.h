@@ -33,3 +33,10 @@ int set_connection_timeout(struct Connection* con, int seconds,
 void destroy_connection(struct Connection* con);
 
 int is_crash(struct Connection* con);
+
+int window_recv_packet(struct Connection* con, int pkt_seq, 
+						char* data, int pkt_len);
+
+int window_is_able_send(struct Connection* con);
+
+int window_ack_packet(struct Connection* con, int ack);
