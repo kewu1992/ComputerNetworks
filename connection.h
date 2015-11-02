@@ -3,6 +3,7 @@
 
 #define FIXED_WINDOW_SIZE 8
 #define CRASH_TIMES 5
+#define MAX_DUPLICATE_ACK 3
 
 struct Connection{
 	/* 1 for download, I am receiver, the remote peer is sender
@@ -14,10 +15,12 @@ struct Connection{
 	int timer_fd;
 	
 	int whole_size;
-	char* packets[1];
+	char** packets;
+	int* packets_len;
 
 	int last_pkt, cur_pkt;
 	int window_size;
+	int duplicate_ack;
 	
 	int successive_fail;
 };

@@ -49,7 +49,8 @@ typedef struct bt_peer_s {
   /* added by Ke Wu, represents if the peer is crashed */
   int is_crash;
   /* added by Ke Wu, represents connction with the peer */
-  struct Connection* conn;
+  struct Connection* up_con;
+  struct Connection* down_con;
 
 } bt_peer_t;
 

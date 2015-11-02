@@ -164,7 +164,8 @@ void bt_parse_peer_list(bt_config_t *config) {
     /* at first, no peer is crashed */
     node->is_crash = 0;
     /* at first, no conncetion */
-    node->conn = NULL;
+    node->up_con = NULL;
+    node->down_con = NULL;
 
     /* gererate linked list */
     node->next = config->peers;
