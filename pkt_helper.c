@@ -223,7 +223,7 @@ char ** generate_data(char * data, int seq_num, int * packets_size, int * last_p
         char pkt_type = DATA_PKT;
         unsigned short header_len = htons(PKT_HEADER_LEN);
         unsigned short total_packet_len = htons((unsigned short) pk_len);
-        uint32_t seq_num_nw = htonl((uint32_t) seq_num);
+        uint32_t seq_num_nw = htonl((uint32_t) seq_num++);
         memcpy(ptr, &magic_num, 2);
         ptr += 2;
         memcpy(ptr, &version, 1);

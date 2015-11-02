@@ -79,7 +79,7 @@ struct bt_config_s {
   /* added by Ke Wu, represents read set of select */
   fd_set readset;
 
-  /* added by Adam Li, represents if it is ready to start downloading procedure, 
+  /* added by Adam Li, represents if it is ready to start downloading procedure,
       0 for false, otherwise 1 */
   int is_check;
 

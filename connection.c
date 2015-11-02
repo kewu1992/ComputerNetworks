@@ -1,7 +1,8 @@
 #include <sys/timerfd.h>
 
-void init_connection(struct Connection* con, struct bt_peer_t* peer, 
+struct Connection * init_connection(struct bt_peer_t* peer,
 					 int is_download){
+    struct Connection * con = (struct Connection *) malloc(sizeof(struct Connection));
 	con->is_download = is_download;
 
 	con->peer = peer;
@@ -22,9 +23,11 @@ void init_connection(struct Connection* con, struct bt_peer_t* peer,
 	con->duplicate_ack = 0;
 
 	con->successive_fail = 0;
+
+    return con;
 }
 
-int set_connection_timeout(struct Connection* con, int seconds, 
+int set_connection_timeout(struct Connection* con, int seconds,
 							int nanoseconds){
 	struct itimerspec timer;
 	/* set interval to zero, only timer once */
@@ -33,7 +36,7 @@ int set_connection_timeout(struct Connection* con, int seconds,
 	/* set timer value */
 	timer.it_value.tv_sec = seconds;
 	timer.it_value.tv_nsec = nano_seconds;
-	
+
 	return timerfd_settime(con->timer_fd, 0, &timer, NULL);
 }
 
@@ -47,6 +50,8 @@ void destroy_connection(struct Connection* con){
 		}
 	free(con->packets);
 	free(con->packets_len);
+    free(con->prev_get_hash);
+    free(con);
 }
 
 
@@ -72,7 +77,7 @@ void douleArray(struct Connection* con){
 	con->packets_len = new_len;
 }
 
-int window_recv_packet(struct Connection* con, int pkt_seq, 
+int window_recv_packet(struct Connection* con, int pkt_seq,
 						char* data, int pkt_len){
 	while (pkt_seq >= con->whole_size)
 		douleArray(con);
@@ -108,5 +113,5 @@ int window_ack_packet(struct Connection* con, int ack){
 	}
 	return 0;
 }
- 
+
 
