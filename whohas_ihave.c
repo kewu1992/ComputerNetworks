@@ -53,16 +53,8 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
     free(hash);
 
     /* send packet */
-    int has_send = 0, ret;
-    while (has_send < len){
-        ret = spiffy_sendto(config->sock, Ihave_packet + has_send,
-                    len - has_send, 0, (struct sockaddr *)from, sizeof(*from));
-        if (ret < 0) {
-            perror("send packet error");
-            exit(-1);
-        } else
-            has_send += ret;
-    }
+    send_packet(config->sock, Ihave_packet, len, 0, (struct sockaddr *)from, 
+                sizeof(*from));
 
     /* free memory that is allocted from generate_Ihave() */
     free(Ihave_packet);

@@ -76,6 +76,11 @@ int window_recv_packet(struct Connection* con, int pkt_seq,
 						char* data, int pkt_len){
 	while (pkt_seq >= con->whole_size)
 		douleArray(con);
+	/* a duplicate data packet */
+	if (con->packets[pkt_seq] != NULL){
+		free(data);
+		return -1;	// return -1 means duplicate data packet
+	}
 	con->packets[pkt_seq] = data;
 	con->packets_len[pkt_seq] = pkt_len;
 	/* if the received packet is the next expect */
@@ -103,5 +108,5 @@ int window_ack_packet(struct Connection* con, int ack){
 	}
 	return 0;
 }
-
+ 
 
