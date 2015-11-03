@@ -285,4 +285,6 @@ void read_get_chunk_file(bt_config_t *config, char* get_chunk_file){
     DPRINTF(DEBUG_INIT, "\n");
 
     fclose(f);
+
+    config->written_chunks = calloc(config->get_chunks.size, sizeof(int));
 }

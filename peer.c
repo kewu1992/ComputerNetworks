@@ -171,8 +171,22 @@ void handle_user_input(char *line, void *cbdata) {
         read_get_chunk_file(config, chunkf);
         /* save output filename */
         strcpy(config->output_file, outf);
+        /* write chunks that I already owned to output file */
+        for (int i = 0; i < config->get_chunks.size; i++){
+          int index = find_chunk(&conig->has_chunks, 
+                                  config->get_chunks.chunks[i].hash);
+          if (index != -1){
+            char* data = read_chunk_data_from_file(config, 
+                                          config->get_chunks.chunks[i].hash);
+            write_chunk_data_to_file(config, data, 512*1024, 
+                                    config->get_chunks.chunks[i].id * 512*1024);
+            config->written_chunks[i] = 1;
+            free(data);
+          }
+        }
         /* flood WHOHAS packet */
         process_get(config);
+        
     }
   }
 }
@@ -221,16 +235,39 @@ void peer_run(bt_config_t *config) {
     nfds = select(config->max_fd+1, &readyset, NULL, NULL, &timeoutSelect);
     
     if (nfds > 0) {
-        /* a packet comes from Internet */
-        if (FD_ISSET(sock, &readyset)) {
-            process_inbound_udp(sock, config);
-        }
+      /* a packet comes from Internet */
+      if (FD_ISSET(sock, &readyset)) {
+          process_inbound_udp(sock, config);
+          nfds--;
+      }
+    
+      /* get input from stdin */
+      if (FD_ISSET(STDIN_FILENO, &readyset)) {
+          process_user_input(STDIN_FILENO, userbuf, handle_user_input,
+             (void*)config);
+          nfds--;
+      }
       
-        /* remember to free config->get_chunks->chunks when finish downloading */
-        /* get input from stdin */
-        if (FD_ISSET(STDIN_FILENO, &readyset)) {
-            process_user_input(STDIN_FILENO, userbuf, handle_user_input,
-               (void*)config);
+      /* some connection maybe timeout */
+      bt_peer_t peer = config->peers;
+      while (nfds > 0 && peer) {
+        if (peer->up_con && FD_ISSET(peer->up_con->timer_fd, &readyset)){
+          process_upload_timeout(peer, config)
+          nfds--;
+        } else if (peer->down_con && FD_ISSET(peer->down_con->timer_fd, &readyset)) {
+          process_download_timeout(peer, config);
+          nfds--;
+        }
+        peer = peer->next;
+      }
+
+      /* try to start a new chunk download (GET) */
+      if (config->is_check == 1)
+        process_download(config);
+      else if (config->is_check == 2){
+        /* finish donwonloading of all chunks */
+        clear_state(config);
+        printf("GOT %s\n", config->output_file);
       }
     } else {
       // SELECT TIMEOUT, check if know all peers' has_chunk info
@@ -238,4 +275,39 @@ void peer_run(bt_config_t *config) {
           process_get(config);
     }
   }
+}
+
+void clear_state(bt_config_t *config){
+  /* clear state of peer */
+  bt_peer_t peer = config->peers;
+  while (peer){
+    if (peer->down_con){
+      /* CLR select set*/
+      FD_CLR(peer->down_con->timer_fd, &config->readset);
+      destroy_connection(peer->down_con);
+      peer->down_con = NULL;
+    }
+    if (peer->has_chunks.size != -1){
+      free(peer->has_chunks.chunks);
+      peer->has_chunks.size = -1;
+      peer->has_chunks.chunks = NULL;
+    }
+    peer->is_crash = 0;
+
+    peer = peer->next;
+  }
+
+  /* clear get_chunks */
+  free(config->get_chunks.chunks);
+
+  /* clear written_chunks */
+  free(config->written_chunks);
+
+  /* reset has_chunks ?? need? */
+  //read_has_chunk_file(&config);
+
+  config->is_check = 0;
+  config->cur_download_num = 0;
+  config->known_peer_num = 0;
+
 }

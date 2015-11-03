@@ -73,6 +73,9 @@ struct bt_config_s {
   struct many_chunks get_chunks;
   /* added by Ke Wu, represents which chunks I own */
   struct many_chunks has_chunks;
+  /* add by Ke Wu, represents the chunks that I have written to disk */
+  int* written_chunks;
+
   /* added by Ke Wu, represents my socket file descriptor */
   int sock;
 

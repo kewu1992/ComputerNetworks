@@ -2,6 +2,7 @@
 #include "connection.h"
 #include "data.h"
 #include "ack.h"
+#include "sha.h"
 
 void process_data_packet(char* packet, bt_config_t* config,
                          struct sockaddr_in* from) {
@@ -27,6 +28,24 @@ void process_data_packet(char* packet, bt_config_t* config,
 
 	/* 4. send ack packet */
 	send_ack_packet(ack_num, config, peer); 
+
+	/* 5. check if have received all data (finish downloading of the chunk) */
+	if (window_finish_data(peer->down_con)){
+		int is_all_finish = finish_chunk(config, peer);
+		if (is_all_finish)
+			/* finish downloading of all chunks */
+			config->is_check = 2;	
+		else 
+			/* need check new connection */
+	        config->is_check = 1; 
+	    /* CLR select set*/
+	    FD_CLR(peer->down_con->timer_fd, &config->readset);
+		/* destroy connection with peer */
+        destroy_connection(peer->down_con);
+        peer->down_con = NULL;
+        /* dec current download number */
+        config->cur_download_num--;
+	}
 }
 
 void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
@@ -47,4 +66,47 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 
 	/* reset timer */
 	set_connection_timeout(toPeer->up_con, 5, 0);
+}
+
+int finish_chunk(bt_config_t* config, bt_peer_t* peer){
+	char data[512*1024];
+	int count = 0;
+	for (int i = 0; i < peer->down_con->whole_size; i++)
+		if (peer->down_con->packets[i]){
+			memcpy(data+count, peer->down_con->packets[i], 
+					peer->down_con->packets_len[i]);
+			count+= peer->down_con->packets_len[i];
+		} else
+			break;
+
+	/* check byte size */
+	if (count != 512*1024)
+		return 0;	// fatal error!
+	
+	/* compute and check hash */
+	char hash[SHA1_HASH_SIZE];
+	SHA1Context sc;
+	SHA1Init(&sc);
+	SHA1Update(&sc, (void*)data, count);
+	SHA1Final(&sc, hash);
+	if (memcmp(hash, peer->down_con->prev_get_hash, SHA1_HASH_SIZE) != 0)
+		return 0;
+
+	/* find chunk id */
+	int index = find_chunk(&config->get_chunks, hash);
+	if (index == -1)
+		return 0;	// fatal error!
+
+	/* write data to output file */
+	write_chunk_data_to_file(config, data, 512*1024, 
+                             config->get_chunks.chunks[index].id * 512*1024);
+    config->written_chunks[index] = 1;
+
+    /* check if all chunks are downloaded */
+    int i;
+    for (i = 0; i < config->get_chunks.size; i++)
+    	if (!config->written_chunks[i])
+    		berak;
+
+    return (i == config->get_chunks.size);
 }
