@@ -1,14 +1,11 @@
-#include <sys/select.h>
 #include "timeout.h"
-#include "bt_parse.h"
-#include "connection.h"
 
 void process_download_timeout(bt_peer_t *peer, bt_config_t * config){
     /* receiver find that sender timeout (GET or ACK timeout, no DATA)*/
 
     /* inc timeout times*/
     peer->down_con->successive_fail++;
-    if (is_crash(peer->down_con->successive_fail)){
+    if (is_crash(peer->down_con)){
         /* sender is crash, destroy connection */
         /* CLR select set*/
         FD_CLR(peer->down_con->timer_fd, &config->readset);
@@ -37,7 +34,7 @@ void process_upload_timeout(bt_peer_t *peer, bt_config_t * config){
     
     /* inc timeout times */
     peer->up_con->successive_fail++;
-    if (is_crash(peer->up_con->successive_fail)){
+    if (is_crash(peer->up_con)){
         /* receiver is crash, destroy connection */
         /* CLR select set*/
         FD_CLR(peer->up_con->timer_fd, &config->readset);
