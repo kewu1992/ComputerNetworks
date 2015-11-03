@@ -24,17 +24,17 @@ void process_data_packet(char* packet, bt_config_t* config,
 	/* do not free data, it should be free when connection is destroied */
 
 	/* 4. send ack packet */
-	send_ack_packet(ack_num, config, peer); 
+	send_ack_packet(ack_num, config, peer);
 
 	/* 5. check if have received all data (finish downloading of the chunk) */
 	if (window_finish_data(peer->down_con)){
 		int is_all_finish = finish_chunk(config, peer);
 		if (is_all_finish)
 			/* finish downloading of all chunks */
-			config->is_check = 2;	
-		else 
+			config->is_check = 2;
+		else
 			/* need check new connection */
-	        config->is_check = 1; 
+	        config->is_check = 1;
 	    /* CLR select set*/
 	    FD_CLR(peer->down_con->timer_fd, &config->readset);
 		/* destroy connection with peer */
@@ -47,22 +47,22 @@ void process_data_packet(char* packet, bt_config_t* config,
 
 void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 	if (is_resend){
-		send_packet(config->sock, 
-					toPeer->up_con->packets[toPeer->up_con->last_pkt], 
+		send_packet(config->sock,
+					toPeer->up_con->packets[toPeer->up_con->last_pkt],
 					toPeer->up_con->packets_len[toPeer->up_con->last_pkt], 0,
 					(struct sockaddr *)&toPeer->addr, sizeof(toPeer->addr));
 	} else {
 		while(window_is_able_send(toPeer->up_con)){
-			send_packet(config->sock, 
-					toPeer->up_con->packets[toPeer->up_con->cur_pkt], 
+			send_packet(config->sock,
+					toPeer->up_con->packets[toPeer->up_con->cur_pkt],
 					toPeer->up_con->packets_len[toPeer->up_con->cur_pkt], 0,
 					(struct sockaddr *)&toPeer->addr, sizeof(toPeer->addr));
-			toPeer->up_con->cur_pkt++;	
+			toPeer->up_con->cur_pkt++;
 		}
 	}
 
 	/* reset timer */
-	set_connection_timeout(toPeer->up_con, 5, 0);
+	set_connection_timeout(toPeer->up_con, 3600, 0);
 }
 
 int finish_chunk(bt_config_t* config, bt_peer_t* peer){
@@ -70,7 +70,7 @@ int finish_chunk(bt_config_t* config, bt_peer_t* peer){
 	int count = 0;
 	for (int i = 0; i < peer->down_con->whole_size; i++)
 		if (peer->down_con->packets[i]){
-			memcpy(data+count, peer->down_con->packets[i], 
+			memcpy(data+count, peer->down_con->packets[i],
 					peer->down_con->packets_len[i]);
 			count+= peer->down_con->packets_len[i];
 		} else
@@ -79,7 +79,7 @@ int finish_chunk(bt_config_t* config, bt_peer_t* peer){
 	/* check byte size */
 	if (count != 512*1024)
 		return 0;	// fatal error!
-	
+
 	/* compute and check hash */
 	char hash[SHA1_HASH_SIZE];
 	SHA1Context sc;
@@ -95,15 +95,15 @@ int finish_chunk(bt_config_t* config, bt_peer_t* peer){
 		return 0;	// fatal error!
 
 	/* write data to output file */
-	write_chunk_data_to_file(config, data, 512*1024, 
+	write_chunk_data_to_file(config, data, 512*1024,
                              config->get_chunks.chunks[index].id * 512*1024);
     config->written_chunks[index] = 1;
 
     /* add chunk to has_chunk */
-    struct single_chunk* temp = (struct single_chunk*) 
-    							malloc(sizeof(struct single_chunk) * 
+    struct single_chunk* temp = (struct single_chunk*)
+    							malloc(sizeof(struct single_chunk) *
     							(config->has_chunks.size + 1));
-    memcpy(temp, config->has_chunks.chunks, 
+    memcpy(temp, config->has_chunks.chunks,
     	 	sizeof(struct single_chunk) * config->has_chunks.size);
     memcpy(temp[config->has_chunks.size].hash, hash, SHA1_HASH_SIZE);
     free(config->has_chunks.chunks);

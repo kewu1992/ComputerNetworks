@@ -41,11 +41,11 @@ void send_ack_packet(int ack_num, bt_config_t* config, bt_peer_t* toPeer) {
 		return;
 
 	char* packet = generate_ack(ack_num, &len);
-	send_packet(config->sock, packet, len, 0, (struct sockaddr *)&toPeer->addr, 
+	send_packet(config->sock, packet, len, 0, (struct sockaddr *)&toPeer->addr,
 				sizeof(toPeer->addr));
 	free(packet);
 
 	/* reset timer */
-	set_connection_timeout(toPeer->down_con, 5, 0);
+	set_connection_timeout(toPeer->down_con, 3600, 0);
 }
 
