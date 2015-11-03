@@ -1,9 +1,7 @@
-#include <sys/timerfd.h>
-#include <stdlib.h>
-#include "bt_parse.h"
 #include "connection.h"
 
-struct Connection * init_connection(struct bt_peer_t* peer, int is_download,
+
+struct Connection * init_connection(bt_peer_t* peer, int is_download,
 									char** packets, int size, 
 									int max_pkt_len, int last_pkt_len){
     struct Connection * con = (struct Connection *) malloc(sizeof(struct Connection));
@@ -57,7 +55,7 @@ int set_connection_timeout(struct Connection* con, int seconds,
 	timer.it_interval.tv_nsec = 0;
 	/* set timer value */
 	timer.it_value.tv_sec = seconds;
-	timer.it_value.tv_nsec = nano_seconds;
+	timer.it_value.tv_nsec = nanoseconds;
 
 	return timerfd_settime(con->timer_fd, 0, &timer, NULL);
 }
@@ -65,7 +63,7 @@ int set_connection_timeout(struct Connection* con, int seconds,
 void destroy_connection(struct Connection* con){
 	close(con->timer_fd);
 
-	for (int i = 0; i < whole_size; i++)
+	for (int i = 0; i < con->whole_size; i++)
 		if (con->packets[i] != NULL){
 			free(con->packets[i]);
 			con->packets[i] = NULL;
@@ -94,7 +92,7 @@ void douleArray(struct Connection* con){
 		new_array[i] = NULL;
 	con->whole_size = new_size;
 	free(con->packets);
-	free(con->new_len);
+	free(con->packets_len);
 	con->packets = new_array;
 	con->packets_len = new_len;
 }

@@ -1,7 +1,3 @@
-#include "pkt_helper.h"
-#include "connection.h"
-#include "data.h"
-#include "helper.h"
 #include "ack.h"
 
 void process_ack_packet(char* packet, bt_config_t* config,

@@ -3,6 +3,7 @@
 
 #include <sys/timerfd.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "bt_parse.h"
 
 #define FIXED_WINDOW_SIZE 8
@@ -14,7 +15,7 @@ struct Connection{
 	 * 0 for upload, I am sender, the rmote peer is receiver */
 	int is_download;
 
-	struct bt_peer_t* peer;
+	bt_peer_t* peer;
 
 	int timer_fd;
 
@@ -44,7 +45,7 @@ struct Connection{
     char * prev_get_hash;
 };
 
-struct Connection * init_connection(struct bt_peer_t* peer, int is_download,
+struct Connection * init_connection(bt_peer_t* peer, int is_download,
 									char** packets, int size, 
 									int max_pkt_len, int last_pkt_len);
 
