@@ -30,6 +30,8 @@ void process_getpkt(int len, char * packet, bt_config_t * config, struct sockadd
         return;
     }
 
+    config->cur_upload_num++;
+
     /* 2. parse get packet */
     char * hash = parse_get(packet);
     /* 3. if connecting, destroy connection */
@@ -105,7 +107,9 @@ void process_download(bt_config_t * config) {
         if (peer != NULL) {
             peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
             FD_SET(peer->down_con->timer_fd, &config->readset);
-            peer->down_con->prev_get_hash = get_chunks.chunks[i].hash;
+            char * hash = (char *) malloc(CHUNK_HASH_SIZE);
+            hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
+            peer->down_con->prev_get_hash = hash;
             send_getpkt(peer, config);
             config->cur_download_num++;
             dlable_flags[i] = 0;
@@ -126,7 +130,9 @@ void process_download(bt_config_t * config) {
             if (peer != NULL) {
                 peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
                 FD_SET(peer->down_con->timer_fd, &config->readset);
-                peer->down_con->prev_get_hash = get_chunks.chunks[i].hash;
+                char * hash = (char *) malloc(CHUNK_HASH_SIZE);
+                hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
+                peer->down_con->prev_get_hash = hash;
                 send_getpkt(peer, config);
                 peer->is_crash = 0;
                 config->cur_download_num++;
@@ -156,7 +162,7 @@ int is_curr_downloading(char * hash, bt_peer_t * peers) {
     for (bt_peer_t * p = peers;
             p != NULL && p->down_con != NULL; p = peers->next) {
         struct Connection * down_con = p->down_con;
-        if (memcmp(down_con->prev_get_hash, hash) == 0) {
+        if (memcmp(down_con->prev_get_hash, hash, CHUNK_HASH_SIZE) == 0) {
             return 1;
         }
     }
