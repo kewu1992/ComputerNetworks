@@ -21,8 +21,6 @@
 
 #define SELECT_TIMEOUT 5
 
-void peer_run(bt_config_t *config);
-
 int main(int argc, char **argv) {
   bt_config_t config;
 
@@ -162,7 +160,7 @@ void handle_user_input(char *line, void *cbdata) {
         strcpy(config->output_file, outf);
         /* write chunks that I already owned to output file */
         for (int i = 0; i < config->get_chunks.size; i++){
-          int index = find_chunk(&conig->has_chunks,
+          int index = find_chunk(&config->has_chunks,
                                   config->get_chunks.chunks[i].hash);
           if (index != -1){
             char* data = read_chunk_data_from_file(config,
@@ -214,7 +212,7 @@ void peer_run(bt_config_t *config) {
   struct timeval timeoutSelect = {SELECT_TIMEOUT, 0};
 
   /* init readset */
-  FD_ZERO(&config->readset)
+  FD_ZERO(&config->readset);
   FD_SET(STDIN_FILENO, &config->readset);
   FD_SET(sock, &config->readset);
   config->max_fd = sock;
@@ -238,10 +236,10 @@ void peer_run(bt_config_t *config) {
       }
 
       /* some connection maybe timeout */
-      bt_peer_t peer = config->peers;
+      bt_peer_t * peer = config->peers;
       while (nfds > 0 && peer) {
         if (peer->up_con && FD_ISSET(peer->up_con->timer_fd, &readyset)){
-          process_upload_timeout(peer, config)
+          process_upload_timeout(peer, config);
           nfds--;
         } else if (peer->down_con && FD_ISSET(peer->down_con->timer_fd, &readyset)) {
           process_download_timeout(peer, config);
@@ -268,7 +266,7 @@ void peer_run(bt_config_t *config) {
 
 void clear_state(bt_config_t *config){
   /* clear state of peer */
-  bt_peer_t peer = config->peers;
+  bt_peer_t * peer = config->peers;
   while (peer){
     if (peer->down_con){
       /* CLR select set*/

@@ -20,6 +20,15 @@
 #include "data.h"
 #include "ack.h"
 #include "denied.h"
+#include "timeout.h"
+
+
+
+void peer_run(bt_config_t *config);
+void clear_state(bt_config_t *config);
+void handle_user_input(char *line, void *cbdata);
+void process_get(bt_config_t* config);
+void process_inbound_udp(int sock, bt_config_t *config);
 
 #endif
 
