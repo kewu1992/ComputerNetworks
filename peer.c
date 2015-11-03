@@ -304,7 +304,8 @@ void clear_state(bt_config_t *config){
   free(config->written_chunks);
 
   /* reset has_chunks ?? need? */
-  //read_has_chunk_file(&config);
+  //free(config->has_chunks.chunks);
+  //read_has_chunk_file(config);
 
   config->is_check = 0;
   config->cur_download_num = 0;

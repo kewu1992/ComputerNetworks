@@ -104,6 +104,7 @@ void process_download(bt_config_t * config) {
         bt_peer_t * peer = find_first_noncrash_peer_with_chunk(get_chunks.chunks[i].hash, config->peers);
         if (peer != NULL) {
             peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
+            FD_SET(peer->down_con->timer_fd, &config->readset);
             peer->down_con->prev_get_hash = get_chunks.chunks[i].hash;
             send_getpkt(peer, config);
             config->cur_download_num++;
@@ -124,6 +125,7 @@ void process_download(bt_config_t * config) {
                     get_chunks.chunks[i].hash, config->peers);
             if (peer != NULL) {
                 peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
+                FD_SET(peer->down_con->timer_fd, &config->readset);
                 peer->down_con->prev_get_hash = get_chunks.chunks[i].hash;
                 send_getpkt(peer, config);
                 peer->is_crash = 0;

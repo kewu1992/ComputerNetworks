@@ -61,15 +61,26 @@ void send_packet(int socket, char* data, size_t packet_len, int flag,
 }
 
 char* read_chunk_data_from_file(bt_config_t* config, char* hash){
-	int chunk_index = find_chunk(&config->has_chunks, hash);
-	int chunk_id = config->has_chunks.chunks[chunk_index].id;
+	//int chunk_index = find_chunk(&config->has_chunks, hash);
+	//int chunk_id = config->has_chunks.chunks[chunk_index].id;
 	
-	char buf[BT_FILENAME_LEN];
+	char buf[BT_FILENAME_LEN], buf2[BT_FILENAME_LEN];
 	FILE* master_chunk_file = fopen(config->chunk_file, "r");
+	/* read master data file name */
 	if (fgets(buf, sizeof(buf), master_chunk_file) == NULL){
 		perror("read master chunk file error");
 		exit(-1);
 	}
+	/* read chunk id */
+	fgets(buf2, sizeof(buf2), master_chunk_file);
+	int chunk_id
+	fscanf(file, "%d %s\n", &chunk_id, buf2);
+	str2hash(buf2);
+	while (memcmp(hash, buf2, CHUNK_HASH_SIZE) != 0){
+		fscanf(file, "%d %s\n", &chunk_id, buf2);
+		str2hash(buf2);
+	}
+
 	fclose(master_chunk_file);
 
 	FILE* master_data_file = fopen(buf+6, "r");
@@ -96,4 +107,14 @@ void write_chunk_data_to_file(bt_config_t* config, char* data, int len,
 		exit(-1);
 	}
 	fclose(file);
+}
+
+void str2hash(char* string){
+    int i = 0;
+    while (i>>1 < CHUNK_HASH_SIZE) {
+        int b;
+        sscanf(&string[i], "%2x", &b);
+        string[i/2] = b;
+        i += 2;
+    }   
 }

@@ -102,6 +102,17 @@ int finish_chunk(bt_config_t* config, bt_peer_t* peer){
                              config->get_chunks.chunks[index].id * 512*1024);
     config->written_chunks[index] = 1;
 
+    /* add chunk to has_chunk */
+    struct single_chunk* temp = (struct single_chunk*) 
+    							malloc(sizeof(struct single_chunk) * 
+    							(config->has_chunks.size + 1));
+    memcpy(temp, config->has_chunks.chunks, 
+    	 	sizeof(struct single_chunk) * config->has_chunks.size);
+    memcpy(temp[config->has_chunks.size].hash, hash, SHA1_HASH_SIZE);
+    free(config->has_chunks.chunks);
+    config->has_chunks.chunks = temp;
+    config->has_chunks.size++;
+
     /* check if all chunks are downloaded */
     int i;
     for (i = 0; i < config->get_chunks.size; i++)
