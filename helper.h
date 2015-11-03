@@ -11,7 +11,14 @@
 #ifndef _HELP_H_
 #define _HELP_H_
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "bt_parse.h"
+#include "spiffy.h"
 
 /* description: find a chunk in an array of chunks (compare hash value) 
  * return: the index of the chunk in the array, 
@@ -30,5 +37,7 @@ void send_packet(int socket, char* data, size_t packet_len, int flag,
 				 struct sockaddr *dest_addr, socklen_t addr_len);
 
 char* read_chunk_data_from_file(bt_config_t* config, char* hash);
-
+void write_chunk_data_to_file(bt_config_t* config, char* data, int len, 
+								int offset);
+void str2hash(char* string);
 #endif

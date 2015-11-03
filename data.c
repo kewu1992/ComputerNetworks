@@ -1,11 +1,5 @@
-#include <stdlib.h>
-#include "pkt_helper.h"
-#include "helper.h"
-#include "bt_parse.h"
-#include "connection.h"
 #include "data.h"
-#include "ack.h"
-#include "sha.h"
+
 
 void process_data_packet(char* packet, bt_config_t* config,
                          struct sockaddr_in* from) {
@@ -91,7 +85,7 @@ int finish_chunk(bt_config_t* config, bt_peer_t* peer){
 	SHA1Context sc;
 	SHA1Init(&sc);
 	SHA1Update(&sc, (void*)data, count);
-	SHA1Final(&sc, hash);
+	SHA1Final(&sc, (uint8_t*)hash);
 	if (memcmp(hash, peer->down_con->prev_get_hash, SHA1_HASH_SIZE) != 0)
 		return 0;
 
@@ -120,7 +114,7 @@ int finish_chunk(bt_config_t* config, bt_peer_t* peer){
     int i;
     for (i = 0; i < config->get_chunks.size; i++)
     	if (!config->written_chunks[i])
-    		berak;
+    		break;
 
     return (i == config->get_chunks.size);
 }
