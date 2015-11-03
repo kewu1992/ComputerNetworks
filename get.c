@@ -54,10 +54,126 @@ void process_download(bt_config_t * config) {
         return;
     }
 
-    if (config->cur_download_num == config->max_conn) {
+    if (has_reached_max_download(config)) {
         // if has reached max download, return and keep waiting
         return;
     }
 
+    int left_dl_num = config->max_conn - config->cur_download_num;
 
+    struct many_chunks get_chunks = config->get_chunks;
+    struct many_chunks has_chunks = config->has_chunks;
+
+    int dlable_flags[get_chunks.size];
+
+    // init flags to be all 1s, i.e. all downloable
+    int i;
+    for (i = 0; i < get_chunks.size; i++) {
+        dlable_flags[i] = 1;
+    }
+
+    // clear out the ones already in has_chunks or currently downloading
+    // count the number of chunks downloadable
+    int flag_count = get_chunks.size;
+    for (i = 0; i < get_chunks.size; i++) {
+        if (is_in_has_chunks(get_chunks.chunks[i].hash, &has_chunks)
+                || is_curr_downloading(get_chunks.chunks[i].hash, config->peers)) {
+            dlable_flags[i] = 0;
+            flag_count--;
+        }
+    }
+
+    // try to download from non-crashed peers first
+    for (i = 0; i < get_chunks.size; i++) {
+        if (has_reached_max_download(config)) {
+            break;
+        }
+
+        if (!dlable_flags[i]) {
+            continue;
+        }
+
+        // below is downloable get chunk
+        bt_peer_t * peer = find_first_noncrash_peer_with_chunk(get_chunks.chunks[i].hash, config->peers);
+        if (peer != NULL) {
+            peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
+            peer->down_con->prev_get_hash = get_chunks.chunks[i].hash;
+            send_getpkt(peer, config);
+            config->cur_download_num++;
+            dlable_flags[i] = 0;
+            flag_count--;
+        }
+    }
+
+
+    // still can download and still have downloable chunks
+    // need to check crashed peer
+    if (!has_reached_max_download(config) && flag_count > 0) {
+        for (i = 0; i < get_chunks.size && dlable_flags[i]; i++) {
+            if (has_reached_max_download(config)) {
+                break;
+            }
+            bt_peer_t * peer = find_first_crashed_peer_with_chunk(
+                    get_chunks.chunks[i].hash, config->peers);
+            if (peer != NULL) {
+                peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
+                peer->down_con->prev_get_hash = get_chunks.chunks[i].hash;
+                send_getpkt(peer, config);
+                peer->is_crash = 0;
+                config->cur_download_num++;
+                dlable_flags[i] = 0;
+                flag_count--;
+            }
+        }
+    }
+}
+
+int has_reached_max_download(bt_config_t * config) {
+    return config->cur_download_num == config->max_conn;
+}
+
+int is_in_has_chunks(char * hash, struct many_chunks * has_chunks) {
+    struct single_chunk * chunks = has_chunks->chunks;
+    for (int i = 0; i < has_chunks->size; i++) {
+        struct single_chunk sc = chunks[i];
+        if (memcmp(sc.hash, hash, CHUNK_HASH_SIZE) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int is_curr_downloading(char * hash, bt_peer_t * peers) {
+    for (bt_peer_t * p = peers;
+            p != NULL && p->down_con != NULL; p = peers->next) {
+        struct Connection * down_con = p->down_con;
+        if (memcmp(down_con->prev_get_hash, hash) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+bt_peer_t * find_first_noncrash_peer_with_chunk(char * hash, bt_peer_t * peers) {
+    for (bt_peer_t * p = peers;
+            p != NULL && !(p->is_crash); p = peers->next) {
+        struct many_chunks has_chunks = p->has_chunks;
+        int result = is_in_has_chunks(hash, &has_chunks);
+        if (result == 1) {
+            return p;
+        }
+    }
+    return NULL;
+}
+
+bt_peer_t * find_first_crashed_peer_with_chunk(char * hash, bt_peer_t * peers) {
+    for (bt_peer_t * p = peers;
+            p != NULL && p->is_crash; p = peers->next) {
+        struct many_chunks has_chunks = p->has_chunks;
+        int result = is_in_has_chunks(hash, &has_chunks);
+        if (result == 1) {
+            return p;
+        }
+    }
+    return NULL;
 }
