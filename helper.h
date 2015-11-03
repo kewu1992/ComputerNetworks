@@ -8,8 +8,8 @@
  * Description: header file of helper.c
  *
  */
-#ifndef _GET_H_
-#define _GET_H_
+#ifndef _HELP_H_
+#define _HELP_H_
 
 #include "bt_parse.h"
 
@@ -31,4 +31,4 @@ void send_packet(int socket, char* data, size_t packet_len, int flag,
 
 char* read_chunk_data_from_file(bt_config_t* config, char* hash);
 
-#endif _GET_H_
+#endif
