@@ -12,6 +12,7 @@ void send_deniedpkt(bt_peer_t * peer, bt_config_t * config) {
 void process_deniedpkt(int len, char * packet, bt_config_t * config, struct sockaddr_in * from) {
     bt_peer_t * peer = find_peer(config->peers, from);
     config->cur_download_num--;
+    FD_CLR(peer->down_con->timer_fd, &config->readset);
     destroy_connection(peer->down_con);
     peer->down_con = NULL;
     peer->is_crash = 1;

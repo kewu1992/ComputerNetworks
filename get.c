@@ -11,7 +11,7 @@
 
 void send_getpkt(bt_peer_t * peer, bt_config_t * config) {
     struct Connection * down_con = peer->down_con;
-    /* re-generate and resend get packet */
+    /* generate and send get packet */
     int len;
     char * get_pkt = generate_get(down_con->prev_get_hash, &len);
     send_packet(config->sock, get_pkt, len, 0, (struct sockaddr *)&peer->addr, sizeof(peer->addr));
@@ -50,6 +50,8 @@ void process_getpkt(int len, char * packet, bt_config_t * config, struct sockadd
     /* 6 .init connection */
     peer->up_con = init_connection(peer, 0, data_packets, packets_size,
                                     MAX_PKT_LEN, last_p_len);
+    FD_SET(peer->up_con->timer_fd, &config->readset);
+    config->max_fd = (peer->up_con->timer_fd > config->max_fd) ? peer->up_con->timer_fd : config->max_fd; 
     /* do not free data_packets, it should be free when connection is destroied */
 
     /* 7. send data packets */
@@ -107,6 +109,7 @@ void process_download(bt_config_t * config) {
         if (peer != NULL) {
             peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
             FD_SET(peer->down_con->timer_fd, &config->readset);
+            config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
             char * hash = (char *) malloc(CHUNK_HASH_SIZE);
             hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
             peer->down_con->prev_get_hash = hash;
@@ -130,6 +133,7 @@ void process_download(bt_config_t * config) {
             if (peer != NULL) {
                 peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
                 FD_SET(peer->down_con->timer_fd, &config->readset);
+                config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
                 char * hash = (char *) malloc(CHUNK_HASH_SIZE);
                 hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
                 peer->down_con->prev_get_hash = hash;
