@@ -30,5 +30,7 @@ void send_packet(int socket, char* data, size_t packet_len, int flag,
 				 struct sockaddr *dest_addr, socklen_t addr_len);
 
 char* read_chunk_data_from_file(bt_config_t* config, char* hash);
-
+void write_chunk_data_to_file(bt_config_t* config, char* data, int len, 
+								int offset);
+void str2hash(char* string);
 #endif
