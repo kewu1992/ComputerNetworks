@@ -7,6 +7,7 @@
  *
  */
 
+#include <sys/select.h>
 #include "get.h"
 
 void send_getpkt(bt_peer_t * peer, bt_config_t * config) {

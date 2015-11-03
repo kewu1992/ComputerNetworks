@@ -8,6 +8,9 @@
  * Description: header file of helper.c
  *
  */
+#ifndef _GET_H_
+#define _GET_H_
+
 #include "bt_parse.h"
 
 /* description: find a chunk in an array of chunks (compare hash value) 
@@ -27,3 +30,5 @@ void send_packet(int socket, char* data, size_t packet_len, int flag,
 				 struct sockaddr *dest_addr, socklen_t addr_len);
 
 char* read_chunk_data_from_file(bt_config_t* config, char* hash);
+
+#endif _GET_H_

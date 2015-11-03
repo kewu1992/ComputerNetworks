@@ -1,4 +1,8 @@
+#ifndef _CONNECTION_H_
+#define _CONNECTION_H_
+
 #include <sys/timerfd.h>
+#include <stdlib.h>
 #include "bt_parse.h"
 
 #define FIXED_WINDOW_SIZE 8
@@ -61,3 +65,5 @@ int window_ack_packet(struct Connection* con, int ack);
 int window_finish_ack(struct Connection* con);
 
 int window_finish_data(struct Connection* con);
+
+#endif

@@ -1,3 +1,4 @@
+#include <sys/select.h>
 #include "timeout.h"
 #include "bt_parse.h"
 #include "connection.h"

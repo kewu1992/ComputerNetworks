@@ -1,4 +1,7 @@
+#include <stdlib.h>
 #include "pkt_helper.h"
+#include "helper.h"
+#include "bt_parse.h"
 #include "connection.h"
 #include "data.h"
 #include "ack.h"

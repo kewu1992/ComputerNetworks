@@ -1,4 +1,7 @@
 #include <sys/timerfd.h>
+#include <stdlib.h>
+#include "bt_parse.h"
+#include "connection.h"
 
 struct Connection * init_connection(struct bt_peer_t* peer, int is_download,
 									char** packets, int size, 

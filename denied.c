@@ -1,4 +1,6 @@
+#include <sys/select.h>
 #include "denied.h"
+#include "connection.h"
 
 
 void send_deniedpkt(bt_peer_t * peer, bt_config_t * config) {
