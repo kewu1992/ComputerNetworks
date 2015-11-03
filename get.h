@@ -2,9 +2,10 @@
 #define _GET_H_
 
 #include "bt_parse.h"
-#include "Connection.h"
+#include "connection.h"
 #include "pkt_helper.h"
 #include "denied.h"
+#include "data.h"
 
 void send_getpkt(bt_peer_t * peer, bt_config_t * config);
 void process_getpkt(int len, char * packet, bt_config_t * config, struct sockaddr_in * from);

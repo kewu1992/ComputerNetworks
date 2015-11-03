@@ -52,7 +52,7 @@ void process_getpkt(int len, char * packet, bt_config_t * config, struct sockadd
     peer->up_con = init_connection(peer, 0, data_packets, packets_size,
                                     MAX_PKT_LEN, last_p_len);
     FD_SET(peer->up_con->timer_fd, &config->readset);
-    config->max_fd = (peer->up_con->timer_fd > config->max_fd) ? peer->up_con->timer_fd : config->max_fd; 
+    config->max_fd = (peer->up_con->timer_fd > config->max_fd) ? peer->up_con->timer_fd : config->max_fd;
     /* do not free data_packets, it should be free when connection is destroied */
 
     /* 7. send data packets */
@@ -70,8 +70,6 @@ void process_download(bt_config_t * config) {
         // if has reached max download, return and keep waiting
         return;
     }
-
-    int left_dl_num = config->max_conn - config->cur_download_num;
 
     struct many_chunks get_chunks = config->get_chunks;
     struct many_chunks has_chunks = config->has_chunks;
