@@ -11,7 +11,14 @@
 #ifndef _HELP_H_
 #define _HELP_H_
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "bt_parse.h"
+#include "spiffy.h"
 
 /* description: find a chunk in an array of chunks (compare hash value) 
  * return: the index of the chunk in the array, 

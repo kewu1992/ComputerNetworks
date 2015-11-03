@@ -8,12 +8,7 @@
  * Description: some helper functions 
  *
  */
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+
 #include "helper.h"
 
 /* description: find a chunk in an array of chunks (compare hash value) 
@@ -74,11 +69,11 @@ char* read_chunk_data_from_file(bt_config_t* config, char* hash){
 	}
 	/* read chunk id */
 	fgets(buf2, sizeof(buf2), master_chunk_file);
-	int chunk_id
-	fscanf(file, "%d %s\n", &chunk_id, buf2);
+	int chunk_id;
+	fscanf(master_chunk_file, "%d %s\n", &chunk_id, buf2);
 	str2hash(buf2);
 	while (memcmp(hash, buf2, CHUNK_HASH_SIZE) != 0){
-		fscanf(file, "%d %s\n", &chunk_id, buf2);
+		fscanf(master_chunk_file, "%d %s\n", &chunk_id, buf2);
 		str2hash(buf2);
 	}
 
