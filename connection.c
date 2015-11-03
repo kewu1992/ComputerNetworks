@@ -5,11 +5,14 @@ struct Connection * init_connection(struct bt_peer_t* peer, int is_download,
 									int max_pkt_len, int last_pkt_len){
     struct Connection * con = (struct Connection *) malloc(sizeof(struct Connection));
 	
+	/* connection data */
 	con->is_download = is_download;
 
 	con->peer = peer;
 
 	con->timer_fd = timerfd_create(CLOCK_REALTIME, 0);
+
+	con->successive_fail = 0;
 
 	/* whole data */
 	if (!is_download){
@@ -33,9 +36,12 @@ struct Connection * init_connection(struct bt_peer_t* peer, int is_download,
 	con->last_pkt = 0;
 	con->cur_pkt = 0;
 	con->window_size = FIXED_WINDOW_SIZE;
+
+	/* window data for upload (sender) */
 	con->duplicate_ack = 0;
 
-	con->successive_fail = 0;
+	/* window data for download (receiver) */
+	con->recv_size = 0;
 
     return con;
 }
@@ -107,6 +113,9 @@ int window_recv_packet(struct Connection* con, int pkt_seq,
 		while(con->cur_pkt < con->whole_size && con->packets[con->cur_pkt])
 			con->cur_pkt++;
 	}
+
+	/* add received bytes size */
+	con->recv_size += pkt_len;
 	return con->cur_pkt - 1;	// return the next expect packet - 1
 }
 
@@ -128,4 +137,11 @@ int window_ack_packet(struct Connection* con, int ack){
 	return 0;
 }
 
+int window_finish_ack(struct Connection* con) {
+	return (con->cur_pkt == con->whole_size && 
+			con->last_pkt == con->whole_size);
+}
 
+int window_finish_data(struct Connection* con) {
+	return (con->recv_size ==  512 * 1024);
+}

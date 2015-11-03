@@ -30,6 +30,9 @@ struct Connection{
     // if >= MAX_DUPLICATE_ACK, sender will resend the data packet
 	int duplicate_ack;
 
+	// for receiver to use, how many bytes has received from sender
+	int recv_size;
+
 	int successive_fail;
 
     // for receiver to use, previous chunk hash in GET packet,
@@ -54,3 +57,7 @@ int window_recv_packet(struct Connection* con, int pkt_seq,
 int window_is_able_send(struct Connection* con);
 
 int window_ack_packet(struct Connection* con, int ack);
+
+int window_finish_ack(struct Connection* con);
+
+int window_finish_data(struct Connection* con);
