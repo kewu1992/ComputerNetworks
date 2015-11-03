@@ -21,10 +21,17 @@ void send_getpkt(bt_peer_t * peer, bt_config_t * config) {
 
 
 void process_getpkt(int len, char * packet, bt_config_t * config, struct sockaddr_in * from) {
-    /* 1. parse get packet */
-    char * hash = parse_get(packet);
-    /* 2. find peer that send the get packet */
+    /* 1. find peer that send the get packet */
     bt_peer_t * peer = find_peer(config->peers, from);
+
+    if (config->cur_upload_num == config->max_conn) {
+        // reached max upload limit, will deny this peer's GET request
+        send_deniedpkt(peer, config);
+        return;
+    }
+
+    /* 2. parse get packet */
+    char * hash = parse_get(packet);
     /* 3. if connecting, destroy connection */
     if (peer->up_con != NULL) {
         destroy_connection(peer->up_con);
