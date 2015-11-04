@@ -25,8 +25,9 @@ void process_download_timeout(bt_peer_t *peer, bt_config_t * config){
     if (peer->down_con->cur_pkt == 0)
         send_getpkt(peer, config);
     else
-        /* it is a ACK timeout, just wait? */
-        return;
+    /* it is a ACK timeout, resend ack packet */
+        send_ack_packet(peer->down_con->cur_pkt - 1, config, peer);
+
 }
 
 void process_upload_timeout(bt_peer_t *peer, bt_config_t * config){
