@@ -270,7 +270,8 @@ void peer_run(bt_config_t *config) {
       }
     } else {
       // SELECT TIMEOUT, check if know all peers' has_chunk info
-      if (config->known_peer_num+1 < config->peer_num)
+      if (config->get_chunks.chunks != NULL &&
+          config->known_peer_num+1 < config->peer_num)
           process_get(config);
     }
   }
@@ -298,6 +299,7 @@ void clear_state(bt_config_t *config){
 
   /* clear get_chunks */
   free(config->get_chunks.chunks);
+  config->get_chunks.chunks = NULL;
 
   /* clear written_chunks */
   free(config->written_chunks);
