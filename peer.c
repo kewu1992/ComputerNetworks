@@ -230,6 +230,8 @@ void peer_run(bt_config_t *config) {
 
       /* get input from stdin */
       if (FD_ISSET(STDIN_FILENO, &readyset)) {
+          // CLR STDIN from select, remember to remove this line when finish debug!
+          FD_CLR(STDIN_FILENO, &config->readset);
           process_user_input(STDIN_FILENO, userbuf, handle_user_input,
              (void*)config);
           nfds--;
@@ -255,6 +257,8 @@ void peer_run(bt_config_t *config) {
         /* finish donwonloading of all chunks */
         clear_state(config);
         printf("GOT %s\n", config->output_file);
+        // SET STDIN from select, remember to remove this line when finish debug!
+        FD_SET(STDIN_FILENO, &config->readset);
       }
     } else {
       // SELECT TIMEOUT, check if know all peers' has_chunk info
