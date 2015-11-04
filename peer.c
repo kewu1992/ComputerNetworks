@@ -73,6 +73,7 @@ void process_inbound_udp(int sock, bt_config_t *config) {
 
   /* Demultiplex */
   int type = demultiplexing(ret, buf);
+  printf("Received packet type: %d\n", type);
   switch (type){
     /* received a WHOHAS packet */
     case 0:
@@ -225,6 +226,7 @@ void peer_run(bt_config_t *config) {
     if (nfds > 0) {
       /* a packet comes from Internet */
       if (FD_ISSET(sock, &readyset)) {
+          printf("A pkt comes from internet.\n");
           process_inbound_udp(sock, config);
           nfds--;
       }
@@ -242,9 +244,11 @@ void peer_run(bt_config_t *config) {
       bt_peer_t * peer = config->peers;
       while (nfds > 0 && peer) {
         if (peer->up_con && FD_ISSET(peer->up_con->timer_fd, &readyset)){
+            printf("Upload timeout\n");
           process_upload_timeout(peer, config);
           nfds--;
         } else if (peer->down_con && FD_ISSET(peer->down_con->timer_fd, &readyset)) {
+            printf("Download timeout\n");
           process_download_timeout(peer, config);
           nfds--;
         }

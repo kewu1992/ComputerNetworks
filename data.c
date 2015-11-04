@@ -62,7 +62,7 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 	}
 
 	/* reset timer */
-	set_connection_timeout(toPeer->up_con, 3600, 0);
+	set_connection_timeout(toPeer->up_con, 5, 0);
 }
 
 int finish_chunk(bt_config_t* config, bt_peer_t* peer){
