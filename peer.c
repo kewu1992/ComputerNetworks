@@ -219,6 +219,7 @@ void peer_run(bt_config_t *config) {
   while (1) {
     int nfds;
     readyset = config->readset;
+    timeoutSelect.tv_sec = SELECT_TIMEOUT;
     nfds = select(config->max_fd+1, &readyset, NULL, NULL, &timeoutSelect);
 
     if (nfds > 0) {
@@ -230,6 +231,8 @@ void peer_run(bt_config_t *config) {
 
       /* get input from stdin */
       if (FD_ISSET(STDIN_FILENO, &readyset)) {
+          // CLR STDIN from select, remember to remove this line when finish debug!
+          FD_CLR(STDIN_FILENO, &config->readset);
           process_user_input(STDIN_FILENO, userbuf, handle_user_input,
              (void*)config);
           nfds--;
@@ -249,12 +252,17 @@ void peer_run(bt_config_t *config) {
       }
 
       /* try to start a new chunk download (GET) */
-      if (config->is_check == 1)
+      if (config->is_check == 1) {
         process_download(config);
+        config->is_check = 0;
+      }
       else if (config->is_check == 2){
         /* finish donwonloading of all chunks */
         clear_state(config);
         printf("GOT %s\n", config->output_file);
+        // SET STDIN from select, remember to remove this line when finish debug!
+        FD_SET(STDIN_FILENO, &config->readset);
+        config->is_check = 0;
       }
     } else {
       // SELECT TIMEOUT, check if know all peers' has_chunk info
