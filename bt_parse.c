@@ -124,6 +124,8 @@ void bt_parse_command_line(bt_config_t *config) {
     exit(-1);
   }
   config->myport = ntohs(p->addr.sin_port);
+  config->myaddr = p->addr;
+  
   assert(config->identity != 0);
   assert(strlen(config->chunk_file) != 0);
   assert(strlen(config->has_chunk_file) != 0);

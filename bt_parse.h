@@ -62,6 +62,7 @@ struct bt_config_s {
   int   max_conn;
   short identity;
   unsigned short myport;
+  struct sockaddr_in myaddr;
 
   int argc;
   char **argv;
