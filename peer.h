@@ -13,16 +13,14 @@
 #include "spiffy.h"
 #include "bt_parse.h"
 #include "input_buffer.h"
-#include "whohas_ihave.h"
-#include "pkt_helper.h"
-#include "helper.h"
+#include "whohas.h"
+#include "ihave.h"
 #include "get.h"
 #include "data.h"
 #include "ack.h"
+#include "helper.h"
 #include "denied.h"
 #include "timeout.h"
-
-
 
 void peer_run(bt_config_t *config);
 void clear_state(bt_config_t *config);
