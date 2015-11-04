@@ -219,6 +219,7 @@ void peer_run(bt_config_t *config) {
   while (1) {
     int nfds;
     readyset = config->readset;
+    timeoutSelect.tv_sec = SELECT_TIMEOUT;
     nfds = select(config->max_fd+1, &readyset, NULL, NULL, &timeoutSelect);
 
     if (nfds > 0) {
