@@ -173,7 +173,7 @@ int is_curr_downloading(char * hash, bt_peer_t * peers) {
 }
 
 bt_peer_t * find_first_noncrash_peer_with_chunk(char * hash, bt_peer_t * peers) {
-    for (bt_peer_t * p = peers; p != NULL; p = peers->next) {
+    for (bt_peer_t * p = peers; p != NULL; p = p->next) {
         if (p->is_crash || p->down_con != NULL) {
             continue;
         }
@@ -187,8 +187,8 @@ bt_peer_t * find_first_noncrash_peer_with_chunk(char * hash, bt_peer_t * peers) 
 }
 
 bt_peer_t * find_first_crashed_peer_with_chunk(char * hash, bt_peer_t * peers) {
-    for (bt_peer_t * p = peers; p != NULL; p = peers->next) {
-        if (p->is_crash || p->down_con != NULL) {
+    for (bt_peer_t * p = peers; p != NULL; p = p->next) {
+        if (!p->is_crash || p->down_con != NULL) {
             continue;
         }
         struct many_chunks has_chunks = p->has_chunks;
