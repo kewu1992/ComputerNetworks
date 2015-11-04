@@ -16,7 +16,7 @@ void send_getpkt(bt_peer_t * peer, bt_config_t * config) {
     int len;
     char * get_pkt = generate_get(down_con->prev_get_hash, &len);
     send_packet(config->sock, get_pkt, len, 0, (struct sockaddr *)&peer->addr, sizeof(peer->addr));
-    set_connection_timeout(down_con, 5, 0);
+    set_connection_timeout(down_con, CONNECTION_TIMEOUT, 0);
     free(get_pkt);
 }
 

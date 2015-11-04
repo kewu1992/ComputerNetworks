@@ -46,6 +46,6 @@ void send_ack_packet(int ack_num, bt_config_t* config, bt_peer_t* toPeer) {
 	free(packet);
 
 	/* reset timer */
-	set_connection_timeout(toPeer->down_con, 5, 0);
+	set_connection_timeout(toPeer->down_con, CONNECTION_TIMEOUT, 0);
 }
 
