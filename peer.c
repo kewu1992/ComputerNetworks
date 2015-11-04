@@ -252,14 +252,17 @@ void peer_run(bt_config_t *config) {
       }
 
       /* try to start a new chunk download (GET) */
-      if (config->is_check == 1)
+      if (config->is_check == 1) {
         process_download(config);
+        config->is_check = 0;
+      }
       else if (config->is_check == 2){
         /* finish donwonloading of all chunks */
         clear_state(config);
         printf("GOT %s\n", config->output_file);
         // SET STDIN from select, remember to remove this line when finish debug!
         FD_SET(STDIN_FILENO, &config->readset);
+        config->is_check = 0;
       }
     } else {
       // SELECT TIMEOUT, check if know all peers' has_chunk info
