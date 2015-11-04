@@ -5,6 +5,7 @@
 #include "connection.h"
 #include "data.h"
 #include "helper.h"
+#include "timeout.h"
 
 void process_ack_packet(char* packet, bt_config_t* config,
                          struct sockaddr_in* from);
