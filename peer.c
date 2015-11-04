@@ -100,8 +100,8 @@ void process_inbound_udp(int sock, bt_config_t *config) {
 }
 
 /* the function will flood the network with a WHOHAS packet */
-void process_get(bt_config_t* config) {
-
+void send_whohas_pkt(bt_config_t* config) {
+    printf("send whohas pkt\n");
     char** hashs = (char**) malloc(sizeof(char*) * config->get_chunks.size);
     for (int i = 0; i < config->get_chunks.size; i++){
         hashs[i] = (char*) malloc(CHUNK_HASH_SIZE);
@@ -160,10 +160,12 @@ void handle_user_input(char *line, void *cbdata) {
         /* save output filename */
         strcpy(config->output_file, outf);
         /* write chunks that I already owned to output file */
+        int count = 0;
         for (int i = 0; i < config->get_chunks.size; i++){
           int index = find_chunk(&config->has_chunks,
                                   config->get_chunks.chunks[i].hash);
           if (index != -1){
+            count++;
             char* data = read_chunk_data_from_file(config,
                                           config->get_chunks.chunks[i].hash);
             write_chunk_data_to_file(config, data, 512*1024,
@@ -172,8 +174,12 @@ void handle_user_input(char *line, void *cbdata) {
             free(data);
           }
         }
-        /* flood WHOHAS packet */
-        process_get(config);
+        /* check if all chunks can be accessed locally */
+        if (count == config->get_chunks.size)
+          config->is_check = 2;
+        else
+          /* flood WHOHAS packet */
+          send_whohas_pkt(config);
 
     }
   }
@@ -226,7 +232,7 @@ void peer_run(bt_config_t *config) {
     if (nfds > 0) {
       /* a packet comes from Internet */
       if (FD_ISSET(sock, &readyset)) {
-          printf("A pkt comes from internet.\n");
+          //printf("A pkt comes from internet.\n");
           process_inbound_udp(sock, config);
           nfds--;
       }
@@ -272,7 +278,7 @@ void peer_run(bt_config_t *config) {
       // SELECT TIMEOUT, check if know all peers' has_chunk info
       if (config->get_chunks.chunks != NULL &&
           config->known_peer_num+1 < config->peer_num)
-          process_get(config);
+          send_whohas_pkt(config);
     }
   }
 }

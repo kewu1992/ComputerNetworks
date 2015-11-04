@@ -11,6 +11,7 @@
 #include "get.h"
 
 void send_getpkt(bt_peer_t * peer, bt_config_t * config) {
+    printf("send a get pkt\n");
     struct Connection * down_con = peer->down_con;
     /* generate and send get packet */
     int len;
@@ -61,6 +62,7 @@ void process_getpkt(int len, char * packet, bt_config_t * config, struct sockadd
 
 
 void process_download(bt_config_t * config) {
+    
     if (!config->is_check) {
         // if is_check is 0, return, keep waiting
         return;
@@ -70,7 +72,6 @@ void process_download(bt_config_t * config) {
         // if has reached max download, return and keep waiting
         return;
     }
-
     struct many_chunks get_chunks = config->get_chunks;
     struct many_chunks has_chunks = config->has_chunks;
 

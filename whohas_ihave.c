@@ -53,6 +53,7 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
     free(hash);
 
     /* send packet */
+    printf("send a IHAVE packet");
     send_packet(config->sock, Ihave_packet, len, 0, (struct sockaddr *)from, 
                 sizeof(*from));
 
