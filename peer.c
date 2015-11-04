@@ -200,7 +200,7 @@ void peer_run(bt_config_t *config) {
 
   bzero(&myaddr, sizeof(myaddr));
   myaddr.sin_family = AF_INET;
-  myaddr.sin_addr.s_addr = htonl(config->myaddr.sin_addr.s_addr);
+  myaddr.sin_addr.s_addr = config->myaddr.sin_addr.s_addr;
   myaddr.sin_port = htons(config->myport);
 
   if (bind(sock, (struct sockaddr *) &myaddr, sizeof(myaddr)) == -1) {
