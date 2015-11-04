@@ -51,7 +51,7 @@ void process_getpkt(int len, char * packet, bt_config_t * config, struct sockadd
     free(data);
     /* 6 .init connection */
     peer->up_con = init_connection(peer, 0, data_packets, packets_size,
-                                    MAX_PKT_LEN, last_p_len);
+                                    MAX_PKT_LEN, last_p_len, NULL);
     FD_SET(peer->up_con->timer_fd, &config->readset);
     config->max_fd = (peer->up_con->timer_fd > config->max_fd) ? peer->up_con->timer_fd : config->max_fd;
     /* do not free data_packets, it should be free when connection is destroied */
@@ -107,12 +107,11 @@ void process_download(bt_config_t * config) {
         // below is downloable get chunk
         bt_peer_t * peer = find_first_noncrash_peer_with_chunk(get_chunks.chunks[i].hash, config->peers);
         if (peer != NULL) {
-            peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
-            FD_SET(peer->down_con->timer_fd, &config->readset);
-            config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
             char * hash = (char *) malloc(CHUNK_HASH_SIZE);
             hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
-            peer->down_con->prev_get_hash = hash;
+            peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0, hash);
+            FD_SET(peer->down_con->timer_fd, &config->readset);
+            config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
             send_getpkt(peer, config);
             config->cur_download_num++;
             dlable_flags[i] = 0;
@@ -131,12 +130,11 @@ void process_download(bt_config_t * config) {
             bt_peer_t * peer = find_first_crashed_peer_with_chunk(
                     get_chunks.chunks[i].hash, config->peers);
             if (peer != NULL) {
-                peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0);
-                FD_SET(peer->down_con->timer_fd, &config->readset);
-                config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
                 char * hash = (char *) malloc(CHUNK_HASH_SIZE);
                 hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
-                peer->down_con->prev_get_hash = hash;
+                peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0, hash);
+                FD_SET(peer->down_con->timer_fd, &config->readset);
+                config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
                 send_getpkt(peer, config);
                 peer->is_crash = 0;
                 config->cur_download_num++;

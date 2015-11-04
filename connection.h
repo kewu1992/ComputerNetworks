@@ -47,7 +47,7 @@ struct Connection{
 
 struct Connection * init_connection(bt_peer_t* peer, int is_download,
 									char** packets, int size, 
-									int max_pkt_len, int last_pkt_len);
+									int max_pkt_len, int last_pkt_len, char* hash);
 
 int set_connection_timeout(struct Connection* con, int seconds,
 							int nanoseconds);

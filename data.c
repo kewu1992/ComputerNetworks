@@ -47,12 +47,14 @@ void process_data_packet(char* packet, bt_config_t* config,
 
 void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 	if (is_resend){
+		printf("resend data packet: %d\n", toPeer->up_con->last_pkt);
 		send_packet(config->sock,
 					toPeer->up_con->packets[toPeer->up_con->last_pkt],
 					toPeer->up_con->packets_len[toPeer->up_con->last_pkt], 0,
 					(struct sockaddr *)&toPeer->addr, sizeof(toPeer->addr));
 	} else {
 		while(window_is_able_send(toPeer->up_con)){
+			printf("send data packet: %d\n", toPeer->up_con->cur_pkt);
 			send_packet(config->sock,
 					toPeer->up_con->packets[toPeer->up_con->cur_pkt],
 					toPeer->up_con->packets_len[toPeer->up_con->cur_pkt], 0,

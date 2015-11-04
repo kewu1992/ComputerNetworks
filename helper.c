@@ -44,6 +44,11 @@ bt_peer_t* find_peer(bt_peer_t *peers, struct sockaddr_in* addr) {
 
 void send_packet(int socket, char* data, size_t packet_len, int flag,
 				 struct sockaddr *dest_addr, socklen_t addr_len) {
+	
+	/* simulate packet loss */
+	if (((double)rand() / (double)RAND_MAX) < PACKET_LOSS_RATIO)
+		return;
+
 	int has_send = 0, ret;
     while (has_send < packet_len){
         ret = spiffy_sendto(socket, data + has_send, packet_len - has_send, 0,

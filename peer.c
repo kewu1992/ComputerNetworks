@@ -48,6 +48,11 @@ int main(int argc, char **argv) {
   /* ignore SIGPIPE in case server is terminated due to broken pipe */
   signal(SIGPIPE, SIG_IGN);
 
+  if (PACKET_LOSS_RATIO > 0)
+    /* initialize random seed */
+    srand (time(NULL));
+
+
   /* main routine */
   peer_run(&config);
   return 0;

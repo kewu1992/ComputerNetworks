@@ -3,7 +3,7 @@
 
 struct Connection * init_connection(bt_peer_t* peer, int is_download,
 									char** packets, int size, 
-									int max_pkt_len, int last_pkt_len){
+									int max_pkt_len, int last_pkt_len, char* hash){
     struct Connection * con = (struct Connection *) malloc(sizeof(struct Connection));
 	
 	/* connection data */
@@ -14,6 +14,8 @@ struct Connection * init_connection(bt_peer_t* peer, int is_download,
 	con->timer_fd = timerfd_create(CLOCK_REALTIME, 0);
 
 	con->successive_fail = 0;
+
+	con->prev_get_hash = hash;
 
 	/* whole data */
 	if (!is_download){
@@ -70,7 +72,8 @@ void destroy_connection(struct Connection* con){
 		}
 	free(con->packets);
 	free(con->packets_len);
-    free(con->prev_get_hash);
+	if (con->prev_get_hash)
+	    free(con->prev_get_hash);
     free(con);
 }
 

@@ -18,6 +18,9 @@ void process_ack_packet(char* packet, bt_config_t* config,
 	/* 3. ack to window */
 	int is_resend = window_ack_packet(peer->up_con, ack_num);
 
+	if (is_resend)
+		printf("resend data packet due to duplicate ack\n");
+
 	/* 4. send (or resend) data packet */
 	send_data_packet(is_resend, config, peer);
 
@@ -39,6 +42,8 @@ void send_ack_packet(int ack_num, bt_config_t* config, bt_peer_t* toPeer) {
 	/* ack_num == -1 means duplicate data packet */
 	if (ack_num == -1)
 		return;
+
+	printf("send ack packet: %d\n", ack_num);
 
 	char* packet = generate_ack(ack_num, &len);
 	send_packet(config->sock, packet, len, 0, (struct sockaddr *)&toPeer->addr,
