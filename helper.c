@@ -2,17 +2,17 @@
  * helper.c
  *
  * Authors: Ke Wu <kewu@andrew.cmu.edu>
- *  
+ *
  * Date: 10/23/2015
  *
- * Description: some helper functions 
+ * Description: some helper functions
  *
  */
 
 #include "helper.h"
 
-/* description: find a chunk in an array of chunks (compare hash value) 
- * return: the index of the chunk in the array, 
+/* description: find a chunk in an array of chunks (compare hash value)
+ * return: the index of the chunk in the array,
  *         -1 if not found
  */
 int find_chunk(struct many_chunks *chunks, char* hash){
@@ -22,7 +22,7 @@ int find_chunk(struct many_chunks *chunks, char* hash){
 	return -1;
 }
 
-/* description: find a network address in a linkedlist of peers 
+/* description: find a network address in a linkedlist of peers
  *               (compare IP address and port)
  *  return: the pointer of the peer that have the netowrk address
  *          NULL if not found
@@ -33,7 +33,7 @@ bt_peer_t* find_peer(bt_peer_t *peers, struct sockaddr_in* addr) {
 	bt_peer_t* peer = peers;
 	while (peer){
 		strcpy(buf, inet_ntoa(peer->addr.sin_addr));
-		if ((strcmp(buf, inet_ntoa(addr->sin_addr)) == 0) && 
+		if ((strcmp(buf, inet_ntoa(addr->sin_addr)) == 0) &&
 			(peer->addr.sin_port == addr->sin_port))
 			return peer;
 		peer = peer->next;
@@ -42,24 +42,24 @@ bt_peer_t* find_peer(bt_peer_t *peers, struct sockaddr_in* addr) {
 	return NULL;
 }
 
-void send_packet(int socket, char* data, size_t packet_len, int flag, 
+void send_packet(int socket, char* data, size_t packet_len, int flag,
 				 struct sockaddr *dest_addr, socklen_t addr_len) {
 	int has_send = 0, ret;
     while (has_send < packet_len){
-        ret = spiffy_sendto(socket, data + has_send, packet_len - has_send, 0, 
+        ret = spiffy_sendto(socket, data + has_send, packet_len - has_send, 0,
                     		dest_addr, addr_len);
         if (ret < 0) {
             perror("send packet error");
             exit(-1);
         } else
             has_send += ret;
-    }  
+    }
 }
 
 char* read_chunk_data_from_file(bt_config_t* config, char* hash){
 	//int chunk_index = find_chunk(&config->has_chunks, hash);
 	//int chunk_id = config->has_chunks.chunks[chunk_index].id;
-	
+
 	char buf[BT_FILENAME_LEN], buf2[BT_FILENAME_LEN];
 	FILE* master_chunk_file = fopen(config->chunk_file, "r");
 	/* read master data file name */
@@ -67,6 +67,7 @@ char* read_chunk_data_from_file(bt_config_t* config, char* hash){
 		perror("read master chunk file error");
 		exit(-1);
 	}
+    buf[strlen(buf) - 1] = '\0';
 	/* read chunk id */
 	fgets(buf2, sizeof(buf2), master_chunk_file);
 	int chunk_id;
@@ -89,11 +90,11 @@ char* read_chunk_data_from_file(bt_config_t* config, char* hash){
 		exit(-1);
 	}
 	fclose(master_data_file);
-	
+
 	return data;
 }
 
-void write_chunk_data_to_file(bt_config_t* config, char* data, int len, 
+void write_chunk_data_to_file(bt_config_t* config, char* data, int len,
 								int offset){
 	FILE* file = fopen(config->output_file, "a");
 	fseek(file, offset, SEEK_SET);
@@ -112,5 +113,5 @@ void str2hash(char* string){
         sscanf(&string[i], "%2x", &b);
         string[i/2] = b;
         i += 2;
-    }   
+    }
 }
