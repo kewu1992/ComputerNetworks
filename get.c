@@ -96,7 +96,7 @@ void process_download(bt_config_t * config) {
 
     // try to download from non-crashed peers first
     for (i = 0; i < get_chunks.size; i++) {
-        if (has_reached_max_download(config)) {
+        if (has_reached_max_download(config) || flag_count == 0) {
             break;
         }
 
@@ -122,27 +122,31 @@ void process_download(bt_config_t * config) {
 
     // still can download and still have downloable chunks
     // need to check crashed peer
-    if (!has_reached_max_download(config) && flag_count > 0) {
-        for (i = 0; i < get_chunks.size && dlable_flags[i]; i++) {
-            if (has_reached_max_download(config)) {
-                break;
-            }
-            bt_peer_t * peer = find_first_crashed_peer_with_chunk(
-                    get_chunks.chunks[i].hash, config->peers);
-            if (peer != NULL) {
-                char * hash = (char *) malloc(CHUNK_HASH_SIZE);
-                hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
-                peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0, hash);
-                FD_SET(peer->down_con->timer_fd, &config->readset);
-                config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
-                send_getpkt(peer, config);
-                peer->is_crash = 0;
-                config->cur_download_num++;
-                dlable_flags[i] = 0;
-                flag_count--;
-            }
+    for (i = 0; i < get_chunks.size; i++) {
+        if (has_reached_max_download(config) || flag_count == 0) {
+            break;
+        }
+
+        if (!dlable_flags[i]) {
+            continue;
+        }   
+
+        bt_peer_t * peer = find_first_crashed_peer_with_chunk(
+                get_chunks.chunks[i].hash, config->peers);
+        if (peer != NULL) {
+            char * hash = (char *) malloc(CHUNK_HASH_SIZE);
+            hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
+            peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0, hash);
+            FD_SET(peer->down_con->timer_fd, &config->readset);
+            config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
+            send_getpkt(peer, config);
+            peer->is_crash = 0;
+            config->cur_download_num++;
+            dlable_flags[i] = 0;
+            flag_count--;
         }
     }
+
 }
 
 int has_reached_max_download(bt_config_t * config) {
@@ -152,8 +156,7 @@ int has_reached_max_download(bt_config_t * config) {
 int is_in_has_chunks(char * hash, struct many_chunks * has_chunks) {
     struct single_chunk * chunks = has_chunks->chunks;
     for (int i = 0; i < has_chunks->size; i++) {
-        struct single_chunk sc = chunks[i];
-        if (memcmp(sc.hash, hash, CHUNK_HASH_SIZE) == 0) {
+        if (memcmp(chunks[i].hash, hash, CHUNK_HASH_SIZE) == 0) {
             return 1;
         }
     }
@@ -161,10 +164,10 @@ int is_in_has_chunks(char * hash, struct many_chunks * has_chunks) {
 }
 
 int is_curr_downloading(char * hash, bt_peer_t * peers) {
-    for (bt_peer_t * p = peers;
-            p != NULL && p->down_con != NULL; p = peers->next) {
+    for (bt_peer_t * p = peers; p; p = p->next) {
         struct Connection * down_con = p->down_con;
-        if (memcmp(down_con->prev_get_hash, hash, CHUNK_HASH_SIZE) == 0) {
+        if (down_con && 
+            memcmp(down_con->prev_get_hash, hash, CHUNK_HASH_SIZE) == 0) {
             return 1;
         }
     }

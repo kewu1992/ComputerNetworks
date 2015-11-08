@@ -20,7 +20,7 @@
 #include "bt_parse.h"
 #include "spiffy.h"
 
-#define PACKET_LOSS_RATIO 0.1
+#define PACKET_LOSS_RATIO 0
 
 /* description: find a chunk in an array of chunks (compare hash value) 
  * return: the index of the chunk in the array, 

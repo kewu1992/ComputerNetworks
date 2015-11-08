@@ -101,7 +101,7 @@ char* read_chunk_data_from_file(bt_config_t* config, char* hash){
 
 void write_chunk_data_to_file(bt_config_t* config, char* data, int len,
 								int offset){
-	FILE* file = fopen(config->output_file, "a");
+	FILE* file = fopen(config->output_file, "r+");
 	fseek(file, offset, SEEK_SET);
 	int ret = fwrite(data, 1, len, file);
 	if (ret != len){

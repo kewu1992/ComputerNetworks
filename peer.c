@@ -117,6 +117,9 @@ void handle_user_input(char *line, void *cbdata) {
         read_get_chunk_file(config, chunkf);
         /* save output filename */
         strcpy(config->output_file, outf);
+        /* create file */
+        FILE* file = fopen(config->output_file, "w");
+        fclose(file);
         /* write chunks that I already owned to output file */
         int count = 0;
         for (int i = 0; i < config->get_chunks.size; i++){
