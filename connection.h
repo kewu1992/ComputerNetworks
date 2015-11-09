@@ -91,8 +91,6 @@ void update_RTT(struct Connection* con, struct timeval* sample);
 
 int set_timeout_by_RTO(struct Connection* con);
 
-int my_timercmp(struct timeval *a, struct timeval *b);
-
 void timerdiff(struct timeval *a, struct timeval *b, struct timeval *res);
 
 void printf_window(struct Connection *con);
