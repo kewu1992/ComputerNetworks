@@ -51,13 +51,15 @@ void process_getpkt(int len, char * packet, bt_config_t * config, struct sockadd
     free(data);
     /* 6 .init connection */
     peer->up_con = init_connection(peer, 0, data_packets, packets_size,
-                                    MAX_PKT_LEN, last_p_len, NULL);
+                                    MAX_PKT_LEN, last_p_len, NULL, CONNECTION_TIMEOUT);
     FD_SET(peer->up_con->timer_fd, &config->readset);
     config->max_fd = (peer->up_con->timer_fd > config->max_fd) ? peer->up_con->timer_fd : config->max_fd;
     /* do not free data_packets, it should be free when connection is destroied */
 
     /* 7. send data packets */
     send_data_packet(0, config, peer);
+    /* 8. set initial timer */
+    set_connection_timeout(peer->up_con, CONNECTION_TIMEOUT, 0);
 }
 
 
@@ -109,7 +111,7 @@ void process_download(bt_config_t * config) {
         if (peer != NULL) {
             char * hash = (char *) malloc(CHUNK_HASH_SIZE);
             hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
-            peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0, hash);
+            peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0, hash, 0);
             FD_SET(peer->down_con->timer_fd, &config->readset);
             config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
             send_getpkt(peer, config);
@@ -136,7 +138,7 @@ void process_download(bt_config_t * config) {
         if (peer != NULL) {
             char * hash = (char *) malloc(CHUNK_HASH_SIZE);
             hash = memcpy(hash, get_chunks.chunks[i].hash, CHUNK_HASH_SIZE);
-            peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0, hash);
+            peer->down_con = init_connection(peer, 1, NULL, 0, MAX_PKT_LEN, 0, hash, 0);
             FD_SET(peer->down_con->timer_fd, &config->readset);
             config->max_fd = (peer->down_con->timer_fd > config->max_fd) ? peer->down_con->timer_fd : config->max_fd;
             send_getpkt(peer, config);
@@ -175,29 +177,35 @@ int is_curr_downloading(char * hash, bt_peer_t * peers) {
 }
 
 bt_peer_t * find_first_noncrash_peer_with_chunk(char * hash, bt_peer_t * peers) {
+    // find eligible peer with smallest RTT
+    bt_peer_t *res_peer = NULL;
     for (bt_peer_t * p = peers; p != NULL; p = p->next) {
         if (p->is_crash || p->down_con != NULL) {
             continue;
         }
         struct many_chunks has_chunks = p->has_chunks;
         int result = is_in_has_chunks(hash, &has_chunks);
-        if (result == 1) {
-            return p;
+        if (result == 1 && 
+            (!res_peer || my_timercmp(&res_peer->initRTT, &p->initRTT) > 0)) {
+            res_peer = p;
         }
     }
-    return NULL;
+    return res_peer;
 }
 
 bt_peer_t * find_first_crashed_peer_with_chunk(char * hash, bt_peer_t * peers) {
+    // find eligible peer with smallest RTT
+    bt_peer_t *res_peer = NULL;
     for (bt_peer_t * p = peers; p != NULL; p = p->next) {
         if (!p->is_crash || p->down_con != NULL) {
             continue;
         }
         struct many_chunks has_chunks = p->has_chunks;
         int result = is_in_has_chunks(hash, &has_chunks);
-        if (result == 1) {
-            return p;
+        if (result == 1 && 
+            (!res_peer || my_timercmp(&res_peer->initRTT, &p->initRTT) > 0)) {
+            res_peer = p;
         }
     }
-    return NULL;
+    return res_peer;
 }

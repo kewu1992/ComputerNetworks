@@ -51,6 +51,8 @@ typedef struct bt_peer_s {
   /* added by Ke Wu, represents connction with the peer */
   struct Connection* up_con;
   struct Connection* down_con;
+  /* added by Ke Wu, represents init RTT (measured by whohas and ihave) */
+  struct timeval initRTT;
 
 } bt_peer_t;
 
@@ -95,7 +97,6 @@ struct bt_config_s {
   int known_peer_num;
   /* added by Ke Wu, represents the maximum number of file_descriptor */
   int max_fd;
-
 };
 typedef struct bt_config_s bt_config_t;
 
@@ -110,5 +111,7 @@ bt_peer_t *bt_peer_info(const bt_config_t *c, int peer_id);
 void read_has_chunk_file(bt_config_t *c);
 /* added by Ke Wu, read a get chunk file */
 void read_get_chunk_file(bt_config_t *c, char* file);
+
+struct timeval global_timer;
 
 #endif /* _BT_PARSE_H_ */

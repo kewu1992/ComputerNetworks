@@ -75,6 +75,8 @@ void send_whohas_pkt(bt_config_t* config) {
 
             send_packet(config->sock, whohas_packet[i], packet_len, 0,
                         (struct sockaddr *)&peer->addr, sizeof(peer->addr));
+
+            gettimeofday(&peer->initRTT, NULL);
         }
         peer = peer->next;
     }

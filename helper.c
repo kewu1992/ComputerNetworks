@@ -120,3 +120,19 @@ void str2hash(char* string){
         i += 2;
     }
 }
+
+
+int my_timercmp(struct timeval *a, struct timeval *b) {
+    if (a->tv_sec > b->tv_sec)
+        return 1;
+    else if (a->tv_sec < b->tv_sec)
+        return -1;
+    else  // a.tv_sec == b.tv_sec
+    {
+        if (a->tv_usec > b->tv_usec)
+            return 1;
+        else if (a->tv_usec < b->tv_usec)
+            return -1;  
+    }
+    return 0;
+}

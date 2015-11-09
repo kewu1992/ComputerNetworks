@@ -52,6 +52,13 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 					toPeer->up_con->packets[toPeer->up_con->last_pkt],
 					toPeer->up_con->packets_len[toPeer->up_con->last_pkt], 0,
 					(struct sockaddr *)&toPeer->addr, sizeof(toPeer->addr));
+		// the packet is resent, ignore it when calcualte RTT
+		toPeer->up_con->RTT[toPeer->up_con->last_pkt].tv_sec = 0;
+		toPeer->up_con->RTT[toPeer->up_con->last_pkt].tv_usec = 0;
+		// a packet loss, reset connection
+		reset_congestion(toPeer->up_con);
+		/* reset timer */
+		set_connection_timeout(toPeer->up_con, toPeer->up_con->RTO.tv_sec, toPeer->up_con->RTO.tv_usec * 1000);
 	} else {
 		while(window_is_able_send(toPeer->up_con)){
 			printf("send data packet: %d\n", toPeer->up_con->cur_pkt);
@@ -59,12 +66,16 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 					toPeer->up_con->packets[toPeer->up_con->cur_pkt],
 					toPeer->up_con->packets_len[toPeer->up_con->cur_pkt], 0,
 					(struct sockaddr *)&toPeer->addr, sizeof(toPeer->addr));
+			// set packet send time
+			struct timeval now;
+			gettimeofday(&now, NULL);
+			toPeer->up_con->RTT[toPeer->up_con->cur_pkt].tv_sec = now.tv_sec;
+			toPeer->up_con->RTT[toPeer->up_con->cur_pkt].tv_usec = now.tv_usec;
+
 			toPeer->up_con->cur_pkt++;
 		}
 	}
 
-	/* reset timer */
-	set_connection_timeout(toPeer->up_con, CONNECTION_TIMEOUT, 0);
 }
 
 int finish_chunk(bt_config_t* config, bt_peer_t* peer){

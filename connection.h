@@ -4,11 +4,17 @@
 #include <sys/timerfd.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <stdio.h>
 #include "bt_parse.h"
 
 #define FIXED_WINDOW_SIZE 8
 #define CRASH_TIMES 5
 #define MAX_DUPLICATE_ACK 3
+#define INIT_SSTHRESH 64
+#define USING_CONGESTION_WINDOW 1
+#define ALPHA 0.875
+#define BETA 0.25
 
 struct Connection{
 	/* 1 for download, I am receiver, the remote peer is sender
@@ -43,11 +49,21 @@ struct Connection{
     // for receiver to use, previous chunk hash in GET packet,
     // in case we need to resend GET
     char * prev_get_hash;
+
+    /* the following is for congestion control */
+    struct timeval SRTT, rttvar, RTO;
+    struct timeval* RTT;
+    int is_slow_start;
+    double cwnd;
+    int ssthresh;
+
+
 };
 
 struct Connection * init_connection(bt_peer_t* peer, int is_download,
 									char** packets, int size, 
-									int max_pkt_len, int last_pkt_len, char* hash);
+									int max_pkt_len, int last_pkt_len, char* hash,
+									int initRTT);
 
 int set_connection_timeout(struct Connection* con, int seconds,
 							int nanoseconds);
@@ -66,5 +82,23 @@ int window_ack_packet(struct Connection* con, int ack);
 int window_finish_ack(struct Connection* con);
 
 int window_finish_data(struct Connection* con);
+
+void inc_cwnd(struct Connection* con, int received_ack);
+
+void reset_congestion(struct Connection* con);
+
+void update_RTT(struct Connection* con, struct timeval* sample);
+
+int set_timeout_by_RTO(struct Connection* con);
+
+int my_timercmp(struct timeval *a, struct timeval *b);
+
+void timerdiff(struct timeval *a, struct timeval *b, struct timeval *res);
+
+void printf_window(struct Connection *con);
+
+long timeval2long(struct timeval* time);
+
+void long2timeval(long num, struct timeval* time);
 
 #endif

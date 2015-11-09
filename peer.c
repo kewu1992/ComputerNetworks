@@ -24,6 +24,9 @@
 int main(int argc, char **argv) {
   bt_config_t config;
 
+  /* save program begin time */
+  gettimeofday(&global_timer, NULL);
+
   /* initialize configuration */
   bt_init(&config, argc, argv);
 
@@ -168,6 +171,7 @@ void peer_run(bt_config_t *config) {
   bzero(&myaddr, sizeof(myaddr));
   myaddr.sin_family = AF_INET;
   myaddr.sin_addr.s_addr = config->myaddr.sin_addr.s_addr;
+  //inet_aton("127.0.0.1", (struct in_addr *)&myaddr.sin_addr.s_addr);
   myaddr.sin_port = htons(config->myport);
 
   if (bind(sock, (struct sockaddr *) &myaddr, sizeof(myaddr)) == -1) {

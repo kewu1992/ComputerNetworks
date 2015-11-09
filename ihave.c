@@ -31,6 +31,12 @@ void process_Ihave_packet(int len, char* packet, bt_config_t* config,
             free(hash[i]);
         }
         free(hash);  
+        
+        struct timeval now, diff_result;
+        gettimeofday(&now, NULL);
+        timersub(&now, &peer->initRTT, &diff_result);
+        peer->initRTT.tv_sec = diff_result.tv_sec;
+        peer->initRTT.tv_usec = diff_result.tv_usec;
     } else {
         /* already know the info, just free memory*/
         for (int i  = 0; i < size; i++){
