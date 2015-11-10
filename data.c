@@ -11,6 +11,8 @@ void process_data_packet(char* packet, bt_config_t* config,
 	// fix 0-1
 	seq_num--;
 
+	printf("recv data: %d\n", seq_num);
+
 	/* 2. find the peer that send the data packet */
 	bt_peer_t* peer = find_peer(config->peers, from);
 
@@ -61,9 +63,8 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 		// the packet is resent, ignore it when calcualte RTT
 		toPeer->up_con->RTT[toPeer->up_con->last_pkt].tv_sec = 0;
 		toPeer->up_con->RTT[toPeer->up_con->last_pkt].tv_usec = 0;
-		// a packet loss, reset connection
-		if (!toPeer->up_con->ignore_next_timeout_for_reset)
-			reset_congestion(toPeer->up_con);
+		// a packet loss, reset sender connection
+		reset_sender_connection(toPeer->up_con);
 		/* reset timer */
 		set_connection_timeout(toPeer->up_con, toPeer->up_con->RTO.tv_sec, toPeer->up_con->RTO.tv_usec * 1000);
 	} else {
@@ -78,7 +79,9 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 			gettimeofday(&now, NULL);
 			toPeer->up_con->RTT[toPeer->up_con->cur_pkt].tv_sec = now.tv_sec;
 			toPeer->up_con->RTT[toPeer->up_con->cur_pkt].tv_usec = now.tv_usec;
-
+			// inc send times;
+			toPeer->up_con->send_times[toPeer->up_con->cur_pkt]++;
+			
 			toPeer->up_con->cur_pkt++;
 		}
 	}

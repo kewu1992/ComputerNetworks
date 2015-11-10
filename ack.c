@@ -8,6 +8,8 @@ void process_ack_packet(char* packet, bt_config_t* config,
 	// fix 0-1
 	ack_num--;
 
+	printf("recv ack: %d\n", ack_num);
+
 	/* 2. find the peer that send the ack packet */
 	bt_peer_t* peer = find_peer(config->peers, from);
 
@@ -42,11 +44,11 @@ void process_ack_packet(char* packet, bt_config_t* config,
 void send_ack_packet(int ack_num, bt_config_t* config, bt_peer_t* toPeer) {
 	int len;
 
-	/* ack_num == -1 means duplicate data packet */
-	if (ack_num == -1)
+	/* ack_num == 0 means duplicate data packet */
+	if (ack_num == 0)
 		return;
 
-	printf("send ack packet: %d\n", ack_num);
+	printf("send ack packet: %d\n", ack_num-1);
 
 	char* packet = generate_ack(ack_num, &len);
 	send_packet(config->sock, packet, len, 0, (struct sockaddr *)&toPeer->addr,

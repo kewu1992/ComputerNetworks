@@ -53,6 +53,7 @@ struct Connection * init_connection(bt_peer_t* peer, int is_download,
 	con->rttvar.tv_sec = 0;
 	con->rttvar.tv_usec = 0;
 	con->RTT = (struct timeval*) calloc(con->whole_size, sizeof(struct timeval));
+	con->send_times = (int*) calloc(con->whole_size, sizeof(int));
 
 	con->is_slow_start = 1;
 	con->cwnd = 1;
@@ -87,6 +88,7 @@ void destroy_connection(struct Connection* con){
 	if (con->prev_get_hash)
 	    free(con->prev_get_hash);
 	free(con->RTT);
+	free(con->send_times);
     free(con);
 }
 
@@ -120,9 +122,13 @@ int window_recv_packet(struct Connection* con, int pkt_seq,
 	if (con->packets[pkt_seq] != NULL){
 		free(data);
 		return -1;	// return -1 means duplicate data packet
+	} else {
+		con->packets[pkt_seq] = data;
+		con->packets_len[pkt_seq] = pkt_len;
+		/* add received bytes size */
+		con->recv_size += pkt_len;
 	}
-	con->packets[pkt_seq] = data;
-	con->packets_len[pkt_seq] = pkt_len;
+	
 	/* if the received packet is the next expect */
 	if (pkt_seq == con->cur_pkt){
 		/* find the next packet that is not received */
@@ -130,8 +136,6 @@ int window_recv_packet(struct Connection* con, int pkt_seq,
 			con->cur_pkt++;
 	}
 
-	/* add received bytes size */
-	con->recv_size += pkt_len;
 	return con->cur_pkt - 1;	// return the next expect packet - 1
 }
 
@@ -143,13 +147,15 @@ int window_is_able_send(struct Connection* con){
 }
 
 int window_ack_packet(struct Connection* con, int ack){
+	if (ack >= con->cur_pkt)
+		con->cur_pkt = ack + 1;
 	if (ack >= con->last_pkt){
 		inc_cwnd(con, ack + 1 - con->last_pkt);
 
 		con->last_pkt = ack + 1;
 		con->duplicate_ack = 0;
 
-		if (con->RTT[ack].tv_sec != 0 || con->RTT[ack].tv_usec != 0){
+		if (con->send_times[ack] == 1 && (con->RTT[ack].tv_sec != 0 || con->RTT[ack].tv_usec != 0)){
 			// calculate new sample of RTT
 			struct timeval now, sample;
 			gettimeofday(&now, NULL);
@@ -177,6 +183,7 @@ int window_finish_data(struct Connection* con) {
 }
 
 void inc_cwnd(struct Connection* con, int received_ack){
+	received_ack = 1;
 	while(received_ack > 0){
 		if (con->is_slow_start){
 			// slow start
@@ -252,13 +259,11 @@ int set_timeout_by_RTO(struct Connection* con){
 	timersub(&now, &con->RTT[con->last_pkt], &lapse);
 
 	if (my_timercmp(&lapse, &con->RTO) > 0){ // lapse time for the next ack > RTO, already timeout
-		con->ignore_next_timeout_for_reset = 1;
 		return set_connection_timeout(con, 0, 1);
 	}
 	else{
 		timersub(&con->RTO, &lapse, &diff_result);
 		print_time("new left", &diff_result);
-		con->ignore_next_timeout_for_reset = 0;
 		return set_connection_timeout(con, diff_result.tv_sec, diff_result.tv_usec * 1000);
 	}
 	return 0;
@@ -292,4 +297,14 @@ void long2timeval(long num, struct timeval* time){
 
 void print_time(char* message, struct timeval* time){
 	printf("%s:seconds:%d, useconds:%d\n", message, time->tv_sec, time->tv_usec);
+}
+
+void reset_sender_connection(struct Connection* con){
+	/* all timer of the following pakcets are meaningful */
+	for (int i = con->last_pkt; i < con->cur_pkt; i++){
+		con->RTT[i].tv_sec = 0;
+		con->RTT[i].tv_usec = 0;
+	}
+	con->cur_pkt = con->last_pkt + 1;
+	reset_congestion(con);
 }

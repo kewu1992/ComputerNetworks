@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include "bt_parse.h"
+#include "helper.h"
 
 #define FIXED_WINDOW_SIZE 8
 #define CRASH_TIMES 5
@@ -56,9 +57,7 @@ struct Connection{
     int is_slow_start;
     double cwnd;
     int ssthresh;
-    int ignore_next_timeout_for_reset;
-
-
+    int * send_times;
 };
 
 struct Connection * init_connection(bt_peer_t* peer, int is_download,
@@ -101,5 +100,7 @@ long timeval2long(struct timeval* time);
 void long2timeval(long num, struct timeval* time);
 
 void print_time(char* message, struct timeval* time);
+
+void reset_sender_connection(struct Connection* con);
 
 #endif

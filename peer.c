@@ -81,7 +81,6 @@ void process_inbound_udp(int sock, bt_config_t *config) {
 
   /* Demultiplex */
   int type = demultiplexing(ret, buf);
-  printf("Received packet type: %d\n", type);
   switch (type){
     /* received a WHOHAS packet */
     case 0:
