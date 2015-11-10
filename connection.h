@@ -99,4 +99,6 @@ long timeval2long(struct timeval* time);
 
 void long2timeval(long num, struct timeval* time);
 
+void print_time(char* message, struct timeval* time);
+
 #endif

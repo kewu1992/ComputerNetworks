@@ -182,7 +182,7 @@ void inc_cwnd(struct Connection* con, int received_ack){
 			// slow start
 			con->cwnd += 1;
 			printf_window(con);
-			if (con->cwnd >= con->ssthresh)
+			if ((int)con->cwnd >= con->ssthresh)
 				con->is_slow_start = 0;
 		} else {
 			// congestion avoidance
@@ -205,6 +205,8 @@ void update_RTT(struct Connection* con, struct timeval* sample){
 	//zero.tv_sec = 0;
 	//zero.tv_usec = 0;
 
+	print_time("New sample", sample);
+
 	struct timeval diff;
 	timerdiff(sample, &con->SRTT, &diff);
 
@@ -212,6 +214,7 @@ void update_RTT(struct Connection* con, struct timeval* sample){
 	long temp2 = timeval2long(&diff);
 	long temp3 = (1-BETA) * temp1 + BETA * temp2;
 	long2timeval(temp3, &con->rttvar);
+	print_time("rttvar", &con->rttvar);
 	//temp.tv_sec = (1-BETA) * con->rttvar.tv_sec + BETA * diff.tv_sec;
 	//temp.tv_usec = (1-BETA) * con->rttvar.tv_usec + BETA * diff.tv_usec;
 	//timeradd(&zero, &temp, &con->rttvar);
@@ -220,6 +223,7 @@ void update_RTT(struct Connection* con, struct timeval* sample){
 	temp2 = timeval2long(sample);
 	temp3 = ALPHA * temp1 + (1-ALPHA) * temp2;
 	long2timeval(temp3, &con->SRTT);
+	print_time("SRTT", &con->SRTT);
 	//temp.tv_sec = ALPHA * con->SRTT.tv_sec + (1-ALPHA) * sample->tv_sec;
 	//temp.tv_usec = ALPHA * con->SRTT.tv_usec + (1-ALPHA) * sample->tv_usec;
 	//timeradd(&zero, &temp, &con->SRTT);
@@ -228,21 +232,29 @@ void update_RTT(struct Connection* con, struct timeval* sample){
 	temp2 = timeval2long(&con->rttvar);
 	temp3 = temp1 + 4 * temp2;
 	long2timeval(temp3, &con->RTO);
+	print_time("RTO", &con->RTO);
 	//temp.tv_sec = con->SRTT.tv_sec + 4 * con->rttvar.tv_sec;
 	//temp.tv_usec = con->SRTT.tv_usec + 4 * con->rttvar.tv_usec; 
 	//timeradd(&zero, &temp, &con->RTO);
 }
 
 int set_timeout_by_RTO(struct Connection* con){
+	if (con->cur_pkt == con->last_pkt){
+		// the next packet hasn't sent, set timer to RTO
+		return set_connection_timeout(con, con->RTO.tv_sec, con->RTO.tv_usec * 1000);
+	}
+	// the next packet has sent, set timer to RTO - lapse_time
 	struct timeval now, lapse, diff_result;
 	gettimeofday(&now, NULL);
 
+	// con->RTT[con->last_pkt] stores the time that last_pkt sent
 	timersub(&now, &con->RTT[con->last_pkt], &lapse);
 
 	if (my_timercmp(&lapse, &con->RTO) > 0)	// lapse time for the next ack > RTO, already timeout
 		return set_connection_timeout(con, 0, 1);
 	else{
 		timersub(&con->RTO, &lapse, &diff_result);
+		print_time("new left", &diff_result);
 		return set_connection_timeout(con, diff_result.tv_sec, diff_result.tv_usec * 1000);
 	}
 	return 0;
@@ -272,4 +284,8 @@ long timeval2long(struct timeval* time){
 void long2timeval(long num, struct timeval* time){
 	time->tv_sec = num / 1000000;
 	time->tv_usec = num - time->tv_sec * 1000000;
+}
+
+void print_time(char* message, struct timeval* time){
+	printf("%s:seconds:%d, useconds:%d\n", message, time->tv_sec, time->tv_usec);
 }
