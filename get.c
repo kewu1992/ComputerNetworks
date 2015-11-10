@@ -47,7 +47,7 @@ void process_getpkt(int len, char * packet, bt_config_t * config, struct sockadd
     /* 5. generate data packets */
     int packets_size;
     int last_p_len;
-    char ** data_packets = generate_data(data, 0, &packets_size, &last_p_len);
+    char ** data_packets = generate_data(data, 1, &packets_size, &last_p_len);
     free(data);
     /* 6 .init connection */
     peer->up_con = init_connection(peer, 0, data_packets, packets_size,

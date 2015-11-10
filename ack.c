@@ -5,6 +5,9 @@ void process_ack_packet(char* packet, bt_config_t* config,
 	/* 1. parse ack packet */
 	int ack_num = parse_ack(packet);
 
+	// fix 0-1
+	ack_num--;
+
 	/* 2. find the peer that send the ack packet */
 	bt_peer_t* peer = find_peer(config->peers, from);
 

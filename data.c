@@ -8,6 +8,9 @@ void process_data_packet(char* packet, bt_config_t* config,
 	/* 1. parse data packet */
 	char* data = parse_data(packet, &seq_num, &len);
 
+	// fix 0-1
+	seq_num--;
+
 	/* 2. find the peer that send the data packet */
 	bt_peer_t* peer = find_peer(config->peers, from);
 
@@ -22,6 +25,9 @@ void process_data_packet(char* packet, bt_config_t* config,
 	/* 3. store the data packet to window, get ack number*/
 	int ack_num = window_recv_packet(peer->down_con, seq_num, data, len);
 	/* do not free data, it should be free when connection is destroied */
+
+	// fix 0-1
+	ack_num++;
 
 	/* 4. send ack packet */
 	send_ack_packet(ack_num, config, peer);
