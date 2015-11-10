@@ -56,6 +56,7 @@ struct Connection{
     int is_slow_start;
     double cwnd;
     int ssthresh;
+    int ignore_next_timeout_for_reset;
 
 
 };

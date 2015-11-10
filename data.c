@@ -56,7 +56,8 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 		toPeer->up_con->RTT[toPeer->up_con->last_pkt].tv_sec = 0;
 		toPeer->up_con->RTT[toPeer->up_con->last_pkt].tv_usec = 0;
 		// a packet loss, reset connection
-		reset_congestion(toPeer->up_con);
+		if (!toPeer->up_con->ignore_next_timeout_for_reset)
+			reset_congestion(toPeer->up_con);
 		/* reset timer */
 		set_connection_timeout(toPeer->up_con, toPeer->up_con->RTO.tv_sec, toPeer->up_con->RTO.tv_usec * 1000);
 	} else {

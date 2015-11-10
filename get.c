@@ -60,6 +60,7 @@ void process_getpkt(int len, char * packet, bt_config_t * config, struct sockadd
     send_data_packet(0, config, peer);
     /* 8. set initial timer */
     set_connection_timeout(peer->up_con, CONNECTION_TIMEOUT, 0);
+    peer->up_con->ignore_next_timeout_for_reset = 0;
 }
 
 

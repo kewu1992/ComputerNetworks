@@ -230,7 +230,8 @@ void update_RTT(struct Connection* con, struct timeval* sample){
 
 	temp1 = timeval2long(&con->SRTT);
 	temp2 = timeval2long(&con->rttvar);
-	temp3 = temp1 + 4 * temp2;
+	//temp3 = temp1 + 4 * temp2;
+	temp3 = 2 * temp1;
 	long2timeval(temp3, &con->RTO);
 	print_time("RTO", &con->RTO);
 	//temp.tv_sec = con->SRTT.tv_sec + 4 * con->rttvar.tv_sec;
@@ -250,11 +251,14 @@ int set_timeout_by_RTO(struct Connection* con){
 	// con->RTT[con->last_pkt] stores the time that last_pkt sent
 	timersub(&now, &con->RTT[con->last_pkt], &lapse);
 
-	if (my_timercmp(&lapse, &con->RTO) > 0)	// lapse time for the next ack > RTO, already timeout
+	if (my_timercmp(&lapse, &con->RTO) > 0){ // lapse time for the next ack > RTO, already timeout
+		con->ignore_next_timeout_for_reset = 1;
 		return set_connection_timeout(con, 0, 1);
+	}
 	else{
 		timersub(&con->RTO, &lapse, &diff_result);
 		print_time("new left", &diff_result);
+		con->ignore_next_timeout_for_reset = 0;
 		return set_connection_timeout(con, diff_result.tv_sec, diff_result.tv_usec * 1000);
 	}
 	return 0;
@@ -273,7 +277,7 @@ void printf_window(struct Connection *con){
 	timersub(&now, &global_timer, &diff_result);
 	int time_in_millisec = diff_result.tv_sec * 1000 + diff_result.tv_usec / 1000;
 	FILE* file = fopen("problem2-peer.txt", "a");
-	fprintf(file, "f%d\t%d\t%d\n", con->peer->id, time_in_millisec, (int)con->cwnd);
+	fprintf(file, "f%d\t%d\t%d\t%d\n", con->peer->id, time_in_millisec, (int)con->cwnd, con->ssthresh);
 	fclose(file);
 }
 
