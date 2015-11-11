@@ -63,12 +63,25 @@ char ** parse_wi_pkt(int len, char * data, int h_len, int * size);
 // returns the type of this packet, e.g. is it whohas or Ihave or others
 int demultiplexing(int len, char * data);
 
+// generates get packet
 char * generate_get(char * hash, int * len);
+
+// parses get packet, returns the chunk hash
 char * parse_get(char * pkt);
+
+// getnerates list of data packets
 char ** generate_data(char * data, int seq_num, int * packets_size, int * last_p_len);
+
+// parses data packet, returns the chunk data
 char * parse_data(char * pkt, int * seq_num, int * len);
+
+// generates ack packet
 char * generate_ack(int ack_num, int * len);
+
+// parses ack packet, returns the sequence number acked
 int parse_ack(char * pkt);
+
+// generates denied packet
 char * generate_denied(int * len);
 
 #endif

@@ -158,6 +158,8 @@ int demultiplexing(int len, char * data) {
 }
 
 char * generate_get(char * hash, int * len) {
+    // len --> pkt length
+    // hash --> chunk hash to be stored in this packet
     int pk_len = PKT_HEADER_LEN + CHUNK_HASH_SIZE;
     char * one_get = (char *) malloc(pk_len);
     char * ptr = one_get;
