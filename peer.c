@@ -241,12 +241,11 @@ void peer_run(bt_config_t *config) {
         FD_SET(STDIN_FILENO, &config->readset);
         config->is_check = 0;
       }
-    } else {
-      // SELECT TIMEOUT, check if know all peers' has_chunk info
-      if (config->get_chunks.chunks != NULL &&
-          config->known_peer_num+1 < config->peer_num)
-          send_whohas_pkt(config);
     }
+    // check if know all peers' has_chunk info
+    if (config->get_chunks.chunks != NULL &&
+        config->known_peer_num+1 < config->peer_num)
+        send_whohas_pkt(config);
   }
 }
 

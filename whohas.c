@@ -1,5 +1,19 @@
+/*
+ * data.c
+ *
+ * Authors: Ke Wu <kewu@andrew.cmu.edu>
+ *
+ * 15-441 Project 2
+ *
+ * Date: 11/10/2015
+ *
+ * Description: the file is used for process the received whohas packet and 
+ *              send a new whohas packet
+ *
+ */
 #include "whohas.h"
 
+/* process a WHOHAS packet that is received from network */
 void process_whohas_packet(int len, char* packet, bt_config_t* config,
                             struct sockaddr_in* from){
     int size;
