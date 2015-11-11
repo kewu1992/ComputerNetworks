@@ -1,3 +1,47 @@
-checkpoint 1 test:
+## Checkpoint 1 test:
 1. Use example (A.gif, B.gif, A.chunks, B.chunks, A.haschunks, B.haschunks, C.masterchunks) provided by handout to test. Set breakpoints in two peer programs (one for A and one for B), use gdb command x (examine) to examine memory and check value of packets send and received.  
 2. Use test script provided by ckeckpoint 1 to test.
+
+
+## Final Checkpoint test:
+
+### Reliability and correctness tests
+1. Use 2 peers to test peer to peer downloading, compare results with diff
+
+2. Concurrent downloading tests
+
+    1) Use the provided tests.py to test concurrent downloading from 2 reference peers, compare results with diff
+    2) Use 3 peers,
+        peer1 has: chunk 0, chunk 1; wants: chunk 2, chunk 3
+        peer2 has: chunk 1, chunk 2; wants: chunk 3, chunk 4
+        peer3 has: chunk 3, chunk 4; wants: chunk 0, chunk 2
+       So 3 peers will download / upload from / to each other concurrently. See logs for correctness.
+       Compare results with diff.
+    3) Use 4 peers, maximum download limit is 2, to test when reaching upload limit. Situation is:
+        peer1 has: chunk 0, chunk 1; wants: chunk 2, chunk 3
+        peer2 has: chunk 1, chunk 2; wants: chunk 3, chunk 4
+        peer3 has: chunk 3, chunk 4; wants: chunk 0, chunk 2
+        peer4 has: chunk 3, chunk 4; wants: chunk 0, chunk 2
+       Run peer1, 3, 4 first. So they will all wait for peer2's chunk 2. When peer2 is up, only 2 at a time will
+       be downloading, the leftover peer has to wait until one of the downloading peers is done. Read logs to 
+       find the results. Compare the final GOT file with diff.
+       result with diff
+    4) Use 4 peers, maximum download limit is 2, to test when reaching download limit. Situation is:
+        peer1 has: chunk 0, chunk 1; wants: chunk 2, chunk 3
+        peer2 has: chunk 1, chunk 2; wants: chunk 3, chunk 4
+        peer3 has: chunk 3, chunk 4; wants: chunk 0, chunk 2
+        peer4 has: chunk 4; wants: chunk 0, chunk 2, chunk 3
+       So peer4 will reach maximum download limit since it needs to download the 3 chunks from 3 different peers.
+       Read logs to to find the correctness. Compare the final GOT file with diff.
+
+3. Any packet loss
+   Before sending any packet, we set a ratio constant as for the probability of this packet getting lost. So we
+   use 2 peers to test whether packet loss of any kind is handled correctly before congestion control is 
+   implemented, such that our system is robust and correct in handling packet loss.
+
+### Congestion control correctness tests
+1. Change delay or queue configurations in topo.map to test slow start and congestion avoidance on the sender
+   side. Different configurations include:
+        Delay: 0.5, 2 peers; Queue sizes: 20, 30, 40, 50
+        Delay: 0.1, 3 peers; Queue sizes: 20, 30 40, 50
+   Watch logs and congestion window size output file to see correctness. Compare final GOT file with diff.
