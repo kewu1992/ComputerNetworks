@@ -349,8 +349,8 @@ void printf_window(struct Connection *con){
     int time_in_millisec = 
                     diff_result.tv_sec * 1000 + diff_result.tv_usec / 1000;
     FILE* file = fopen("problem2-peer.txt", "a");
-    fprintf(file, "f%d\t%d\t%d\t%d\n", con->peer->id, 
-            time_in_millisec, (int)con->cwnd, con->ssthresh);
+    fprintf(file, "f%d\t%d\t%d\n", con->peer->id, 
+            time_in_millisec, (int)con->cwnd);
     fclose(file);
 }
 
@@ -375,7 +375,7 @@ void timerdiff(struct timeval *a, struct timeval *b, struct timeval *res){
 
 /* helper function, print a timeval with message (for debuging) */
 void print_time(char* message, struct timeval* time){
-    printf("%s:seconds:%d, useconds:%d\n", message, time->tv_sec, 
+    DPRINTF(DEBUG_SOCKETS, "%s:seconds:%d, useconds:%d\n", message, time->tv_sec, 
                                                                 time->tv_usec);
 }
 

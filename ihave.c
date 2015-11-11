@@ -60,7 +60,7 @@ void send_Ihave_packet(int count, char** hash, bt_config_t *config,
     char* Ihave_packet = generate_Ihave(count, hash, CHUNK_HASH_SIZE, &len);
 
     /* send packet */
-    printf("send a IHAVE packet\n");
+    //printf("send a IHAVE packet\n");
     send_packet(config->sock, Ihave_packet, len, 0, (struct sockaddr *)from, 
                 sizeof(*from));
 

@@ -54,7 +54,7 @@ void process_whohas_packet(int len, char* packet, bt_config_t* config,
 
 /* the function will flood the network with a WHOHAS packet */
 void send_whohas_pkt(bt_config_t* config) {
-    printf("send whohas pkt\n");
+    //printf("send whohas pkt\n");
     char** hashs = (char**) malloc(sizeof(char*) * config->get_chunks.size);
     for (int i = 0; i < config->get_chunks.size; i++){
         hashs[i] = (char*) malloc(CHUNK_HASH_SIZE);

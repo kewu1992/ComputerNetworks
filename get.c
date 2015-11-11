@@ -17,7 +17,7 @@
 
 /* when need to send a get pakcet, invoke the function */
 void send_getpkt(bt_peer_t * peer, bt_config_t * config) {
-    printf("send a get pkt\n");
+    //printf("send a get pkt\n");
     struct Connection * down_con = peer->down_con;
     /* generate and send get packet */
     int len;
