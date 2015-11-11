@@ -1,3 +1,16 @@
+/*
+ * peer.h
+ *
+ * Authors: Ke Wu <kewu@andrew.cmu.edu>
+ *
+ * 15-441 Project 2
+ *
+ * Date: 11/10/2015
+ *
+ * Description: header file for peer.c
+ *
+ */
+
 #ifndef _PEER_H_
 #define _PEER_H_
 
@@ -23,10 +36,10 @@
 #include "timeout.h"
 
 void peer_run(bt_config_t *config);
-void clear_state(bt_config_t *config);
 void handle_user_input(char *line, void *cbdata);
-void process_get(bt_config_t* config);
 void process_inbound_udp(int sock, bt_config_t *config);
+/* finsh a GET command, clear state */
+void clear_state(bt_config_t *config);
 
 #endif
 

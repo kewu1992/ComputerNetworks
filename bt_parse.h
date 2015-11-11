@@ -8,11 +8,13 @@
  * stubs.
  *
  * Modified by: Ke Wu <kewu@andrew.cmu.edu>
+ *              Junqiang Li <junqianl@andrew.cmu.edu>
+ *              
  *
- * Date: 10/23/2015
+ * Date: 11/10/2015
  *
  * Description: add two functions to read get_chunk_file and has_chunk_file
- *              add more fields in bt_config_s
+ *              add more fields in bt_config_s, bt_peer_s
  *
  */
 
@@ -111,7 +113,7 @@ bt_peer_t *bt_peer_info(const bt_config_t *c, int peer_id);
 void read_has_chunk_file(bt_config_t *c);
 /* added by Ke Wu, read a get chunk file */
 void read_get_chunk_file(bt_config_t *c, char* file);
-
+/* added by Ke Wu, the global_timer record the time when program begins */
 struct timeval global_timer;
 
 #endif /* _BT_PARSE_H_ */

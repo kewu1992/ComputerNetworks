@@ -55,7 +55,6 @@ int main(int argc, char **argv) {
     /* initialize random seed */
     srand (time(NULL));
 
-
   /* main routine */
   peer_run(&config);
   return 0;
@@ -68,7 +67,7 @@ void process_inbound_udp(int sock, bt_config_t *config) {
   socklen_t fromlen;
   char buf[BUFLEN];
 
-  /* receive UDP packet */
+  /* receive a UDP packet */
   fromlen = sizeof(from);
   int ret = spiffy_recvfrom(sock, buf, BUFLEN, 0,
                             (struct sockaddr *) &from, &fromlen);
@@ -90,15 +89,19 @@ void process_inbound_udp(int sock, bt_config_t *config) {
     case 1:
         process_Ihave_packet(ret, buf, config, &from);
         break;
+    /* received a GET packet */
     case 2:
         process_getpkt(ret, buf, config, &from);
         break;
+    /* received a DATA packet */
     case 3:
         process_data_packet(buf, config, &from);
         break;
+    /* received an ACK packet */
     case 4:
         process_ack_packet(buf, config, &from);
         break;
+    /* received a DENIED packet */
     case 5:
         process_deniedpkt(ret, buf, config, &from);
         break;
@@ -210,22 +213,22 @@ void peer_run(bt_config_t *config) {
           nfds--;
       }
 
-      /* some connection maybe timeout */
+      /* some connections maybe timeout */
       bt_peer_t * peer = config->peers;
       while (nfds > 0 && peer) {
         if (peer->up_con && FD_ISSET(peer->up_con->timer_fd, &readyset)){
             printf("Upload timeout\n");
-          process_upload_timeout(peer, config);
+            process_upload_timeout(peer, config);
           nfds--;
         } else if (peer->down_con && FD_ISSET(peer->down_con->timer_fd, &readyset)) {
             printf("Download timeout\n");
-          process_download_timeout(peer, config);
+            process_download_timeout(peer, config);
           nfds--;
         }
         peer = peer->next;
       }
 
-      /* try to start a new chunk download (GET) */
+      /* try to start a new chunk download (send a GET packet) */
       if (config->is_check == 1) {
         process_download(config);
         config->is_check = 0;
@@ -247,6 +250,7 @@ void peer_run(bt_config_t *config) {
   }
 }
 
+/* finsh a GET command, clear state */
 void clear_state(bt_config_t *config){
   /* clear state of peer */
   bt_peer_t * peer = config->peers;
@@ -273,10 +277,6 @@ void clear_state(bt_config_t *config){
 
   /* clear written_chunks */
   free(config->written_chunks);
-
-  /* reset has_chunks ?? need? */
-  //free(config->has_chunks.chunks);
-  //read_has_chunk_file(config);
 
   config->is_check = 0;
   config->cur_download_num = 0;

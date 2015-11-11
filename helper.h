@@ -3,7 +3,7 @@
  *
  * Authors: Ke Wu <kewu@andrew.cmu.edu>
  *  
- * Date: 10/23/2015
+ * Date: 11/10/2015
  *
  * Description: header file of helper.c
  *
@@ -36,14 +36,20 @@ int find_chunk(struct many_chunks *chunks, char* hash);
  */
 bt_peer_t* find_peer(bt_peer_t *peers, struct sockaddr_in* addr);
 
+/* description: send a packet using sendto */
 void send_packet(int socket, char* data, size_t packet_len, int flag, 
-				 struct sockaddr *dest_addr, socklen_t addr_len);
+                 struct sockaddr *dest_addr, socklen_t addr_len);
 
+/* read the data of a chunk from file (identified by hash) */
 char* read_chunk_data_from_file(bt_config_t* config, char* hash);
 
+/* write the data of a chunk to file (identified by hash) */
 void write_chunk_data_to_file(bt_config_t* config, char* data, int len, 
-								int offset);
+                                int offset);
+
+/* convert character hex to real hex */
 void str2hash(char* string);
 
+/* compare two timeval structs */
 int my_timercmp(struct timeval *a, struct timeval *b);
 #endif

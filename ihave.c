@@ -1,15 +1,17 @@
 /*
- * whohas_ihave.c
+ * ihave.c
  *
  * Authors: Ke Wu <kewu@andrew.cmu.edu>
  *
  * Date: 10/23/2015
  *
- * Description: used for processing WHOHAS packet and IHAVE packet
- *
+ * Description: the file is used for process the received ihave packet and 
+ *              send a new ihave packet
  */
+
 #include "ihave.h"
 
+/* process a IHAVE packet that is received from network */
 void process_Ihave_packet(int len, char* packet, bt_config_t* config,
                             struct sockaddr_in* from){
     int size;
@@ -50,7 +52,9 @@ void process_Ihave_packet(int len, char* packet, bt_config_t* config,
         config->is_check = 1;   
 }
 
-void send_Ihave_packet(int count, char** hash, bt_config_t *config, struct sockaddr_in* from){
+/* when need to send a ihave pakcet, invoke the function */
+void send_Ihave_packet(int count, char** hash, bt_config_t *config, 
+                        struct sockaddr_in* from){
     /* generate a IHAVE packce and send it */
     int len;
     char* Ihave_packet = generate_Ihave(count, hash, CHUNK_HASH_SIZE, &len);

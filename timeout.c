@@ -1,3 +1,16 @@
+/*
+ * timeout.c
+ *
+ * Authors: Ke Wu <kewu@andrew.cmu.edu>
+ *
+ * 15-441 Project 2
+ *
+ * Date: 11/10/2015
+ *
+ * Description: deal with the situation when timeout happens
+ *
+ */
+
 #include "timeout.h"
 
 void process_download_timeout(bt_peer_t *peer, bt_config_t * config){

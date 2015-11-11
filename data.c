@@ -1,6 +1,19 @@
+/*
+ * data.c
+ *
+ * Authors: Ke Wu <kewu@andrew.cmu.edu>
+ *
+ * 15-441 Project 2
+ *
+ * Date: 11/10/2015
+ *
+ * Description: the file is used for process the received data packet and 
+ *				send a new data packet
+ *
+ */
 #include "data.h"
 
-
+/* when a data packet is received, invoke the function to process the pakcet */
 void process_data_packet(char* packet, bt_config_t* config,
                          struct sockaddr_in* from) {
 	int seq_num, len;
@@ -8,7 +21,7 @@ void process_data_packet(char* packet, bt_config_t* config,
 	/* 1. parse data packet */
 	char* data = parse_data(packet, &seq_num, &len);
 
-	// fix 0-1
+	// fix 0-1 bug
 	seq_num--;
 
 	printf("recv data: %d\n", seq_num);
@@ -22,13 +35,14 @@ void process_data_packet(char* packet, bt_config_t* config,
 		return;
 	}
 
+	/* successfully receive a packet, reset successive_fail */
 	peer->down_con->successive_fail = 0;
 
-	/* 3. store the data packet to window, get ack number*/
+	/* 3. store the data packet to window, get ack number */
 	int ack_num = window_recv_packet(peer->down_con, seq_num, data, len);
 	/* do not free data, it should be free when connection is destroied */
 
-	// fix 0-1
+	// fix 0-1 bug
 	ack_num++;
 
 	/* 4. send ack packet */
@@ -41,7 +55,8 @@ void process_data_packet(char* packet, bt_config_t* config,
 			/* finish downloading of all chunks */
 			config->is_check = 2;
 		else
-			/* need check new connection */
+			/* not finish downloading all chunks, 
+			 * need to find and download the next chunk */
 	        config->is_check = 1;
 	    /* CLR select set*/
 	    FD_CLR(peer->down_con->timer_fd, &config->readset);
@@ -53,8 +68,10 @@ void process_data_packet(char* packet, bt_config_t* config,
 	}
 }
 
+/* when need to send a data pakcet, invoke the function */
 void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 	if (is_resend){
+		/* packet loss, resend the last unacked data packet*/
 		printf("resend data packet: %d\n", toPeer->up_con->last_pkt);
 		send_packet(config->sock,
 					toPeer->up_con->packets[toPeer->up_con->last_pkt],
@@ -66,8 +83,10 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 		// a packet loss, reset sender connection
 		reset_sender_connection(toPeer->up_con);
 		/* reset timer */
-		set_connection_timeout(toPeer->up_con, toPeer->up_con->RTO.tv_sec, toPeer->up_con->RTO.tv_usec * 1000);
+		set_connection_timeout(toPeer->up_con, toPeer->up_con->RTO.tv_sec, 
+								toPeer->up_con->RTO.tv_usec * 1000);
 	} else {
+		/* when not exceed window limit, continue sending data packet */
 		while(window_is_able_send(toPeer->up_con)){
 			printf("send data packet: %d\n", toPeer->up_con->cur_pkt);
 			send_packet(config->sock,
@@ -79,18 +98,22 @@ void send_data_packet(int is_resend, bt_config_t* config, bt_peer_t* toPeer) {
 			gettimeofday(&now, NULL);
 			toPeer->up_con->RTT[toPeer->up_con->cur_pkt].tv_sec = now.tv_sec;
 			toPeer->up_con->RTT[toPeer->up_con->cur_pkt].tv_usec = now.tv_usec;
-			// inc send times;
+			// inc send times
 			toPeer->up_con->send_times[toPeer->up_con->cur_pkt]++;
-			
+
 			toPeer->up_con->cur_pkt++;
 		}
 	}
 
 }
 
+/* when finish download a chunk, check if all chunks has been downloaded 
+ * (so that a file is finish downloading)
+ */
 int finish_chunk(bt_config_t* config, bt_peer_t* peer){
 	char data[512*1024];
 	int count = 0;
+	/* get all data packets, stores together */
 	for (int i = 0; i < peer->down_con->whole_size; i++)
 		if (peer->down_con->packets[i]){
 			memcpy(data+count, peer->down_con->packets[i],
